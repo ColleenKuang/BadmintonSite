@@ -209,24 +209,26 @@
                     if (data.msg){
 
                     }else{
+                        /*
                         showResponse({
                             date: selectedDate,
                             start_time: startTime,
                             end_time: endTime,
                             duration_hours: (duration / 60).toFixed(1)
                         });
+                        */
                         window.location.href = `/game`;
                     }
                     
                 } catch (error) {
-                    showError("提交失败：" + error.message);
+                    //showError("提交失败：" + error.message);
                     console.error(error);
                 }
             });
 
             function showError(message) {
-                document.getElementById("response").innerHTML = 
-                    `<p class="error">${message}</p>`;
+                //console.log(message);
+                //document.getElementById("response").innerHTML =  `<p class="error">${message}</p>`;
             }
 
             function showResponse(data) {

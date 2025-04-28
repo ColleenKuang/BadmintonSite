@@ -804,6 +804,7 @@ def date():
 
 @app.route('/api/save_times',methods=['POST'])
 def save_date_time():
+    print("save date")
     data = request.get_json()
     try:
         # 方法1：直接拼接本地时间（推荐）
