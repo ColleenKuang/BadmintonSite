@@ -1,0 +1,1179 @@
+{% macro render_card(events) %}
+<div class="container-fluid pt-3">
+    <div class="row row-cols-3 g-2">
+        {% for event in events %}
+        <div class="col">
+            <div class="card compact-card shadow-sm clickable-card" data-game-type="{{ event.id }}" data-game-available="{{event.avaliable}}" >
+                <img 
+                    src="{{ event.image_url }}" 
+                    class="card-img-top img-fluid" 
+                    alt="{{ event.title }}"
+                    style="object-fit: cover; height: 150px;" 
+                >
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title text-center fw-bold">{{ event.title }}</h5>
+                    <p class="card-text text-center flex-grow-1" style="color:#808080">
+                        {{ event.description }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<style>
+  /* 移动端优化 */
+  @media (max-width: 768px) {
+    .compact-card {
+      height: 220px; /* 固定高度 */
+    }
+    
+    
+    .card-title {
+      font-size: 1.0rem;
+      white-space: nowrap; /* 禁止文字换行 */
+    }
+
+    .card-body{
+      padding:3px;
+    }
+
+    .card-text{
+      font-size: 0.7rem;
+    }
+    
+    .clickable-card {
+      transition: transform 0.1s;
+      cursor: pointer;
+    }
+    .clickable-card:active {
+      transform: scale(0.98);
+    }
+  }
+
+</style>
+{% endmacro %}
+
+{% macro render_score_card(iidx,game) %}
+<div class="card score-card shadow-sm mt-3" data-match-idx="{{iidx-1}}">
+    <div class="card-body p-2">
+      <div class="d-flex justify-content-between align-items-center">
+        <p style="margin-bottom:0px;">#{{iidx}}</p>
+        <button class="btn p-0 editScore" data-match-idx="{{iidx-1}}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
+            </svg>
+        </button>
+      </div>
+      <div class="d-flex justify-content-center">
+        <h1 class="display-1 score-display fw_bold"> {{game.score[0]}} : {{game.score[1]}} </h1>
+      </div>
+      <div class="d-flex justify-content-center mb-1">
+        <p class="text-muted mb-0 abs-score-display">净胜 {{ game.score[0] - game.score[1] | abs }}</p>
+      </div>
+      <div class="row g-3 p-2">
+          <!-- 左侧50% -->
+        <div class="col-6">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex gap-2 p-0 pb-2 align-items-center justify-content-start">
+              <img src="{{ url_for('static', filename='uploads/avatars/' + game.home_team[0].avatar) }}" 
+              width="35" height="35" 
+              class="avatar rounded-circle align-self-center align-middle"
+              alt="用户头像">
+              <p class="mb-0 name-content text-truncate fw-bold">{{game.home_team[0].username}}</p>
+            </li>
+            <li class="list-group-item d-flex gap-2 p-0 pt-2 align-items-center justify-content-start">
+              <img src="{{ url_for('static', filename='uploads/avatars/' + game.home_team[1].avatar) }}" 
+              width="35" height="35" 
+              class="avatar rounded-circle align-self-center align-middle"
+              alt="用户头像">
+              <p class="mb-0 name-content text-truncate fw-bold">{{game.home_team[1].username}}</p>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 右侧50% -->
+        <div class="col-6">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex gap-2 p-0 pb-2 align-items-center justify-content-end">
+              <p class="mb-0 name-content text-truncate fw-bold">{{game.away_team[0].username}}</p>
+              <img src="{{ url_for('static', filename='uploads/avatars/' + game.away_team[0].avatar) }}" 
+              width="35" height="35" 
+              class="avatar rounded-circle align-self-center align-middle"
+              alt="用户头像">
+              
+            </li>
+            <li class="list-group-item d-flex gap-2 p-0 pt-2 align-items-center justify-content-end">
+              <p class="mb-0 name-content text-truncate fw-bold">{{game.away_team[1].username}}</p>
+              <img src="{{ url_for('static', filename='uploads/avatars/' + game.away_team[1].avatar) }}" 
+              width="35" height="35" 
+              class="avatar rounded-circle align-self-center align-middle"
+              alt="用户头像">
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 底部信息 
+      <div class="d-flex justify-content-between">
+          <div class="mt-3 align-items-start text-start text-muted small">
+            <small class="text-muted">操作员: 我是第一 🌤️</small>
+          </div>
+          <div class="mt-3 align-items-end text-end text-muted small">
+              <i class="bi bi-clock-history me-1"></i>最后更新: 2023-07-20 15:30
+          </div>
+      </div>
+      -->
+    </div>
+</div>
+
+<style>
+  .score-card {
+      border-radius: 12px;
+  }
+  .vr {
+      opacity: 0.2;
+      margin: 0 0.5rem;
+  }
+
+  .name-content {
+    height: 60px;   /* 固定卡片高度 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    word-break: break-word;  /* 允许自动换行 */
+    -webkit-line-clamp: 2;    /* 最大显示2行 */
+    overflow: hidden;
+  }
+  
+  /* Bootstrap补充样式 */
+  .text-truncate {
+    white-space: normal !important; /* 覆盖Bootstrap默认样式 */
+  }
+
+  /*
+  @media (max-width: 767px) {
+      .list-group {
+          -webkit-overflow-scrolling: touch;
+      }
+      .list-group-item {
+          min-width: max-content;
+      }
+  }
+  */
+</style>
+{% endmacro %}
+
+{%macro double_1(game_config)%}
+<!-- gamelist content -->   
+<ol class="list-group list-group-numbered">
+  {% for member in game_config.member_list %}
+      {% if member =="" %}
+          <li class="list-group-item clickable-member" data-id='{{loop.index0}}'>空位</li>
+      {% else %}
+          <li class="list-group-item clickable-member d-flex align-items-center" data-id='{{loop.index0}}'>
+              <img src="{{ url_for('static', filename='uploads/avatars/' + member.avatar)}}" 
+              width="30" height="30" 
+              class="avatar rounded-circle align-self-center align-middle ms-2 me-2"
+              alt="用户头像">
+              <p class="mb-0 fw-bold">{{member.username}}</p>
+          </li>
+      {% endif %}
+  {% endfor %}
+</ol>
+{% endmacro %}
+
+{%macro double_2(game_config)%}
+<!-- gamelist content -->   
+<ul class="list-group">
+  {% for member_pair in game_config.member_list|batch(2) %}
+    <li class="list-group-item p-3">  <!-- 使用 li 包裹整个项，保持语义化 -->
+      <div class="d-flex flex-row align-items-center">  <!-- 确保 flex 布局，并垂直居中 -->
+        <!-- 序号（左侧） -->
+        <p class="fw-bold mb-0 me-3">{{ loop.index }}.</p>  <!-- 调整 margin 使序号和头像对齐 -->
+        <!-- 成员头像（右侧） -->
+        <div class="d-flex flex-row w-100">  <!-- 使用 flex 布局让两个头像并排 -->
+          <!-- 第一个成员 -->
+          {% if member_pair[0] == "" %}
+            <div class="col-6 clickable-member" data-id='{{ loop.index0 * 2 }}'>空位</div>
+          {% else %}
+            <div class="col-6 clickable-member d-flex align-items-center" data-id='{{ loop.index0 * 2 }}'>
+              <img 
+                src="{{ url_for('static', filename='uploads/avatars/' + member_pair[0].avatar) }}" 
+                width="30" 
+                height="30" 
+                class="avatar rounded-circle me-2"
+                alt="用户头像"
+              >
+              <p class="mb-0 fw-bold">{{ member_pair[0].username }}</p>
+            </div>
+          {% endif %}
+
+          <!-- 第二个成员 -->
+          {% if member_pair[1] == "" %}
+            <div class="col-6 clickable-member" data-id='{{ loop.index0 * 2 + 1 }}'>空位</div>
+          {% else %}
+            <div class="col-6 clickable-member d-flex align-items-center" data-id='{{ loop.index0 * 2 + 1 }}'>
+              <img 
+                src="{{ url_for('static', filename='uploads/avatars/' + member_pair[1].avatar) }}" 
+                width="30" 
+                height="30" 
+                class="avatar rounded-circle me-2"
+                alt="用户头像"
+              >
+              <p class="mb-0 fw-bold">{{ member_pair[1].username }}</p>
+            </div>
+          {% endif %}
+          
+        </div>
+      </div>
+    </li>
+  {% endfor %}
+</ul>
+{% endmacro %}
+
+{%macro double_3(game_config)%}
+<div class="d-flex flex-row align-items-center w-100 gap-2 mb-0">
+  <h5 class="col-6 fw-bold p-2 mb-0">A组</h5>
+  <h5 class="col-6 fw-bold p-2 mb-0">B组</h5>
+</div>
+<!-- gamelist content -->   
+{% for member_pair in game_config.member_list|batch(2) %}
+    <div class="d-flex flex-row align-items-center w-100 gap-2">  <!-- 确保 flex 布局，并垂直居中 -->
+      <!-- 第一个成员 -->
+      <div class="col-6 clickable-member d-flex A_B_member align-items-center" data-id='{{ loop.index0 * 2 }}'>
+        <p class="fw-bold mb-0 me-2">{{ loop.index }}</p>
+        {% if member_pair[0] == "" %}
+          <p class="mb-0" style="height:30px;align-items: center; display: flex;">空位</p>
+        {% else %}
+          <div class="d-flex align-items-center">
+            <img 
+              src="{{ url_for('static', filename='uploads/avatars/' + member_pair[0].avatar) }}" 
+              width="30" 
+              height="30" 
+              class="avatar rounded-circle me-2"
+              alt="用户头像"
+            >
+            <p class="mb-0 fw-bold">{{ member_pair[0].username }}</p>
+          </div>
+        {% endif %}
+      </div>
+      
+      <!-- 第二个成员 -->
+      <div class="col-6 clickable-member d-flex A_B_member align-items-center " data-id='{{ loop.index0 * 2 + 1 }} '>
+        <p class="fw-bold mb-0 me-2">{{ loop.index }}</p>
+        {% if member_pair[1] == "" or member_pair | length == 1 %}
+          <p class="mb-0" style="height:30px;align-items: center; display: flex;">空位</p>
+        {% else %}
+          <div class="d-flex align-items-center">
+            <img 
+              src="{{ url_for('static', filename='uploads/avatars/' + member_pair[1].avatar) }}" 
+              width="30" 
+              height="30" 
+              class="avatar rounded-circle me-2"
+              alt="用户头像"
+            >
+            <p class="mb-0 fw-bold">{{ member_pair[1].username }}</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+<style>
+  .A_B_member{
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid #CCCCCC;  
+    margin-bottom: 5px;
+  }
+</style>
+{% endfor %}
+{% endmacro %}
+
+{%macro game_info(game_config,players)%}
+<!-- gemeinfo -->
+{% set existing_ids = [] %}
+{% for member in game_config.member_list %}
+    {% if member is mapping %}  {# 检查是否是字典类型 #}
+        {% do existing_ids.append(member.id) %}
+    {% endif %}
+{% endfor %}
+<div class="card pt-2">
+    <div class="card-body">
+        <!-- game title -->
+        <div class="d-flex align-items-center gap-2">
+            <h3 class="card-title fw-bold align-items-center" id="gameTitle">
+                {% if game_config.gametitle %}
+                  <span id="participantCount" class="align-items-center">{{game_config.gametitle}}</span>
+                {% else %}
+                  <span id="participantCount">{{game_config.member_list|length}}</span>人{{game_config.gameshowtitle}}
+                  {% if game_config.gametime %}
+                    <span class="text-muted">|</span>
+                    <span id="gameDate">{{game_config.gametime.strftime("%m-%d")}}</span>
+                  {% endif %}
+                {% endif %}
+            </h3>
+            <button class="btn edit-btn" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#editModal" 
+                    id="editTitleBtn" 
+                    data-action-type="title"
+                    data-modal-title="编辑活动标题">
+                <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                    <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                    <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
+                </svg>
+            </button>
+        </div>
+        <!-- game admin -->
+        <div class="d-flex align-items-center gap-2 mt-2">
+            <img src="{{ url_for('static', filename='uploads/avatars/' + game_config.admin.avatar) }}" 
+                  width="30" height="30" 
+                  class="avatar rounded-circle align-self-center align-middle"
+                  alt="用户头像">
+            <p class="mb-0 small text-muted">{{game_config.admin.username}}(管理员)</p>
+        </div>
+        <!-- game mode -->
+        <div class="d-flex align-items-center gap-2 mt-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-file-earmark-text" viewBox="0 0 16 16">
+                <path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5"/>
+                <path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/>
+              </svg>
+            <p class="mb-0 small text-muted">{{game_config.gametype}}</p>
+        </div>
+        <!-- game date&time -->
+        {% if game_config.gametime %}
+            <div class="d-flex align-items-center gap-2 mt-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
+                <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
+              </svg>
+            
+              <p class="mb-0 small text-muted">{{game_config.gametime.strftime("%Y-%m-%d %H:%M")}}</p>
+            </div>
+        {% else%}
+          <a href="{{url_for('date')}}" class="text-decoration-none text-muted">
+            <div class="d-flex justify-content-between mt-2">
+              <div class="d-flex gap-2 align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
+                    <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+                    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
+                  </svg>
+                  <p class="mb-0 small">点击设置活动时间</p>
+                </div>
+                <div class="align-items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                  </svg>
+                </div>
+            </div>
+          </a>
+        {% endif %}
+        <!-- game location -->
+        <div class="d-flex justify-content-between  mt-2">
+          <div class="d-flex gap-2 align-items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-geo-alt" viewBox="0 0 16 16">
+                <path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A32 32 0 0 1 8 14.58a32 32 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10"/>
+                <path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4m0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+              </svg>
+            <p class="mb-0 small text-muted">比赛地点</p>
+          </div>
+          <div class="align-items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+              </svg>
+          </div>
+        </div>
+        
+    </div>
+</div>
+<!-- gemeinfo end -->
+<!-- gamelist -->
+<div class="card mt-3">
+    <div class="card-body">
+        <!-- gamelist title -->
+        <div class="d-flex justify-content-between mb-2 p-1">
+            <div class="card-title d-flex align-items-start gap-1 mb-0">
+                <h3 class="align-self-end fw-bold mb-0" >报名名单</h3>
+                <p class="align-self-end mb-0 small text-muted ">(点空位可报名)</p>
+            </div>
+            <div class="mt-3 align-items-end text-end text-muted small">
+                {{existing_ids | length}}/{{game_config.member_list | length}}
+            </div>
+        </div>     
+        {% if game_config.gametype == "double-1"%}
+          {{double_1(game_config)}}
+        {% endif %}
+        {% if game_config.gametype == "double-2"%}
+          {{double_2(game_config)}}
+        {% endif %}
+        {% if game_config.gametype == "double-3"%}
+          {{double_3(game_config)}}
+        {% endif %}
+        <!-- gamelist button -->
+        <div class="btn-group gap-2 mt-2">
+          <button class="btn btn-sm" data-type="{{game_config.gametype}}" id="addMember" style="background-color: #673AB7; color: white !important;">增加一组</button>
+          <button class="btn btn-sm" data-type="{{game_config.gametype}}" id="minusMember" style="background-color: #673AB7; color: white !important;">减少一组</button>
+        </div>
+    </div>
+</div>
+<!-- gamelist end -->  
+
+<!-- 自定义弹出菜单 -->
+<div id="contextMenu" class="custom-context-menu">
+  <div class="menu-item" data-type="self">本人报名</div>
+  <div class="menu-item" data-type="other">帮人报名</div>
+</div>
+
+<!-- 自定义弹出菜单 -->
+<div id="cancelMenu" class="custom-context-menu">
+  <div class="menu-item" data-type="cancel">取消报名</div>
+</div>
+
+<!-- gamerule -->
+<div class="card mt-3">
+    <div class="card-body">
+        <h3 class="card-title fw-bold">比赛规则</h3>
+        {% if game_config.gamerule%}
+          <p>{{game_config.gamerule}}</p>
+          <button class="btn edit-btn" 
+                  id="editRuleBtn"
+                  data-bs-toggle="modal" 
+                  data-bs-target="#editModal"
+                  data-modal-title="编辑规则"
+                  data-action-type="rule" 
+                  style="background-color: #673AB7; color: white !important;">
+                  修改比赛规则
+          </button>
+        {% else %}
+          <button class="btn edit-btn" 
+          id="editRuleBtn"
+          data-bs-toggle="modal" 
+          data-bs-target="#editModal"
+          data-modal-title="编辑规则"
+          data-action-type="rule" 
+          style="background-color: #673AB7; color: white !important;">
+          添加比赛规则
+          </button>
+        {% endif %}
+    </div>
+</div>
+<!-- gamerule end -->
+<!-- footer -->
+<footer class="fixed-bottom bg-light">
+    <!-- 第一行：版权信息 -->
+    <div class="container-fluid py-2 border-top">
+      <div class="row">
+        <div class="col-12 text-start">
+          <p class="mb-0 small text-muted">
+            可点击空位报名<br>
+            注：此比赛不收费，仅报名排阵使用
+          </p>
+        </div>
+      </div>
+    </div>
+  
+    <!-- 第二行：导航组件 -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container-fluid">
+        <div class="d-flex justify-content-between w-100">
+          <!-- 左侧导航 -->
+          <div class="d-flex align-items-center">
+              <ul class="navbar-nav">
+                <li class="nav-item">
+                  <div class="btn-group dropup">
+                    <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                      管理
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li class="dropdown-item" id="removeGame">废弃比赛</li>
+                      <li class="dropdown-item" >结束比赛</li>
+                    </ul>
+                  </div>
+                  
+                </li>
+              </ul>
+          </div>
+  
+          <!-- 右侧按钮 -->
+          <div class="d-flex align-items-center">
+              <div class="btn-group">
+                <button class="btn btn-sm" id="inviteBtn">邀请</button>
+                {%if game_config.games|length != 0 %}
+                    <button class="btn btn-sm confirmBtn regenerate-btn">重新生成对阵</button>
+                {% else %}
+                    <button class="btn btn-sm confirmBtn generate-btn">生成对阵</button>
+                {% endif %}
+              </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </footer>
+<!-- footer end -->
+
+<!-- Players Selection Modal -->
+<div class="modal fade" id="chooseotherModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+          <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">选择薄纱对象</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+              <div class="user-list">
+                  <!-- 用户条目 -->
+                  {% for player in players%}
+                  <div class="user-item d-flex justify-content-between align-items-center
+                      {% if player.id in existing_ids %} disabled-item {% endif %}" 
+                      onclick="{% if player.id not in existing_ids %}toggleSelection(this, event){% endif %}">
+                      <div class="d-flex align-items-center gap-3">
+                          <img src="{{ url_for('static', filename='uploads/avatars/' + player.avatar)}}" 
+                              width="30" height="30" 
+                              class="avatar rounded-circle align-self-center align-middle ms-2 me-2"
+                              alt="用户头像">
+                          <span class="fs-6 text-dark fw-bold">
+                              {{player.username}}
+                              {% if player.id in existing_ids %}
+                              <span class="badge bg-secondary ms-2">已报名</span>
+                              {% endif %}
+                          </span>
+                      </div>
+                      <input data-user-id="{{player.id}}" class="form-check-input" type="checkbox" 
+                          {% if player.id in existing_ids %} 
+                              checked disabled 
+                          {% endif %}>
+                  </div>
+                  {% endfor %}
+              </div>
+          </div>
+          <div class="modal-footer">
+            <div class="d-flex justify-content-between align-items-center w-100">
+              <div class="d-flex align-items-center">         
+                <div class="btn-group">
+                  <button class="btn btn-secondary" onclick="toggleAll(false)">全不选</button>
+                  <button class="btn confirmBtn" onclick="toggleAll(true)">全选</button>
+                </div>
+              </div>
+              <div>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                  <button type="button" class="btn confirmBtn" onclick="submitSelection()">确认报名</button>
+                </div>
+              </div>
+            </div>
+          </div>
+      </div>
+  </div>
+</div>
+<!-- Players Selection end -->
+
+<style>
+  /* 自定义弹出菜单样式 */
+  .custom-context-menu {
+      position: absolute;
+      z-index: 1000;
+      padding: 5px;
+      min-width: 120px;
+      background: white;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      display: none;
+  }
+  .menu-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+  }
+
+  .menu-item:hover {
+      background-color: #f8f9fa;
+  }
+
+  #adminBtn{
+      background-color: #673AB7 !important;
+      color: white !important;
+      border: none; 
+  }
+
+  /* 禁用状态样式 */
+  .disabled-item {
+      opacity: 0.7;
+      background-color: #f8f9fa;
+      cursor: not-allowed;
+  }
+
+  .disabled-item .form-check-input {
+      background-color: #e9ecef;
+      border-color: #ced4da;
+      cursor: not-allowed;
+  }
+
+
+</style>
+
+<script>
+// 点击空位
+let currentSelectedItem = null;
+let currentSelectedMember_idx = null;
+let adjustedX = 9;
+let adjustedY = 9;
+const contextMenu = document.getElementById('contextMenu');
+const cancelMenu = document.getElementById('cancelMenu');
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.clickable-member').forEach(member => {
+    member.addEventListener('click', function(e) {
+      const item = e.target.closest('.clickable-member');
+      if (!item) return;
+      currentSelectedMember_idx = this.dataset.id; // 获取 data-id
+      e.preventDefault();
+      
+      // 记录当前选中项
+      currentSelectedItem = item;
+      const isEmptySlot = /\s*空位\s*/.test(item.textContent);
+      if(isEmptySlot){
+        // 定位菜单
+        positionMenu(contextMenu, e.clientX, e.clientY);
+        hideMenu(cancelMenu);
+        showMenu(contextMenu);
+      }else{
+        positionMenu(cancelMenu, e.clientX, e.clientY);
+        hideMenu(contextMenu);
+        showMenu(cancelMenu);
+      }
+    })
+  });
+})
+
+// 点击外部区域关闭菜单
+document.addEventListener('click', (e) => {
+  if (!contextMenu.contains(e.target) && !e.target.closest('.clickable-member')) {
+      hideMenu(contextMenu);
+      hideMenu(cancelMenu);
+  }
+});
+
+function positionMenu(menu, clickX, clickY) {
+  const scrollX = window.scrollX || window.pageXOffset;
+  const scrollY = window.scrollY || window.pageYOffset;
+  
+  // 获取基于文档的坐标（包含滚动偏移）
+  const baseX = event.pageX || (event.clientX + scrollX);
+  const baseY = event.pageY || (event.clientY + scrollY);
+
+  // 计算最终坐标
+  const OFFSET = 5; // 与点击点的偏移量
+  let finalX = baseX + OFFSET;
+  let finalY = baseY + OFFSET;
+
+  // 边界检测（需要考虑滚动后的实际文档尺寸）
+  const docWidth = document.documentElement.scrollWidth;
+  const docHeight = document.documentElement.scrollHeight;
+  
+  // 横向溢出检测
+  if (finalX + menu.offsetWidth > docWidth) {
+    finalX = baseX - menu.offsetWidth - OFFSET - 20;
+  }
+
+  // 纵向溢出检测
+  if (finalY + menu.offsetHeight > docHeight) {
+    finalY = baseY - menu.offsetHeight - OFFSET;
+  }
+  console.log(finalX);
+  console.log(finalY);
+  // 应用定位
+  menu.style.left = `${finalX}px`;
+  menu.style.top = `${finalY}px`;
+}
+
+function showMenu(menu) {
+  menu.style.display = 'block';
+}
+
+function hideMenu(menu) {
+  menu.style.display = 'none';
+  if (currentSelectedItem) {
+      currentSelectedItem.classList.remove('active');
+      currentSelectedItem = null;
+  }
+}
+
+// 菜单点击处理
+contextMenu.addEventListener('click', (e) => {
+  const menuItem = e.target.closest('.menu-item');
+  if (!menuItem) return;
+  if (menuItem.dataset.type === "self"){
+    handleMemberChange(menuItem.dataset.type,"");
+  }
+  if (menuItem.dataset.type === "other"){
+    chooseotherModal.show();
+  }
+  hideMenu(contextMenu);
+});
+
+
+cancelMenu.addEventListener('click', (e) => {
+  const menuItem = e.target.closest('.menu-item');
+  if (!menuItem) return;
+  if (menuItem.dataset.type === "cancel"){
+    handleMemberChange(menuItem.dataset.type,"");
+  }
+  hideMenu(cancelMenu);
+});
+
+// submit selected player
+function submitSelection() {
+  // 方法1：直接使用 selectedPlayers 数组
+  console.log('最终选中用户ID:', selectedPlayers);
+  
+  // 方法2：即时收集所有选中项
+  const checkedBoxes = document.querySelectorAll('.form-check-input:checked');
+  const userIds = Array.from(checkedBoxes).map(checkbox => checkbox.dataset.userId);
+  
+  // 发送到服务器（示例使用 fetch）
+  fetch('/update_member', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        action: "other",
+        selected_ids: userIds,
+        selected_idx: currentSelectedMember_idx,
+      })
+  })
+  .then(response => response.json())
+  .then(data => {
+      console.log('提交成功:', data);
+      chooseotherModal.hide();
+      location.reload();
+  });
+}
+
+// select players
+function toggleSelection(itemElement, event) {
+    // 阻止复选框点击事件冒泡（防止触发两次）
+    if(event.target.tagName === 'INPUT') return
+    
+    const checkbox = itemElement.querySelector('.form-check-input')
+    const userId = checkbox.dataset.userId
+    console.log(userId);
+    // 切换选中状态
+    checkbox.checked = !checkbox.checked
+    
+    // 更新选中数组
+    if(checkbox.checked) {
+        selectedPlayers.push(userId)
+        itemElement.classList.add('selected')
+    } else {
+        selectedPlayers = selectedPlayers.filter(id => id !== userId)
+        itemElement.classList.remove('selected')
+    }
+    
+    console.log('当前选中:', selectedPlayers)
+}
+
+function toggleAll(state) {
+    document.querySelectorAll('.user-item:not(.disabled-item) input[type="checkbox"]').forEach(checkbox => {
+        if(!checkbox.disabled) {
+            checkbox.checked = state;
+            checkbox.closest('.user-item').classList.toggle('selected', state);
+        }
+    });
+}
+
+async function handleMemberChange(actiontype, gametype) {
+  console.log(actiontype);
+  console.log(gametype);
+  let request_body = null
+  if (actiontype == "self" || actiontype == "cancel")
+    request_body = JSON.stringify({
+        action: actiontype,
+        selected_idx: currentSelectedMember_idx,
+    })
+
+  if (actiontype == "add" || actiontype == "minus")
+      request_body = JSON.stringify({
+            action:  actiontype,
+            gametype: gametype
+        })
+  try {            
+      // 显示等待模态框
+      await showModalWithAnimation();
+      console.log(request_body);
+      const response = await fetch('/update_member', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: request_body
+      });
+      
+      const data = await response.json();
+      console.log("操作成功:", data);
+      if (data.msg) {
+        console.log(data.msg);
+        await showMsgModal(data.msg);
+      }else{
+        location.reload();
+      }
+  } catch (error) {
+      console.error('Error:', error);
+  } finally {
+    await safeHideModal();
+  }
+  
+}
+const addBtn = document.getElementById('addMember');
+const minusBtn = document.getElementById('minusMember');
+
+addBtn.addEventListener('click', (e) => {
+    addBtn.disabled = true;
+    minusBtn.disabled = true;
+    handleMemberChange("add",addBtn.dataset.type).finally(() => {
+      addBtn.disabled = false;
+      minusBtn.disabled = false;
+  });
+})
+minusBtn.addEventListener('click', (e) => {
+    addBtn.disabled = true;
+    minusBtn.disabled = true;
+    handleMemberChange("minus",addBtn.dataset.type).finally(() => {
+      addBtn.disabled = false;
+      minusBtn.disabled = false;
+  });
+})
+
+document.getElementById('removeGame').addEventListener('click', (e)=>{
+  fetch('/remove_game', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json'
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+    console.log(data);
+    if(data) {
+        if(data.msg){
+          showMsgModal(data.msg);
+        }else{
+          window.location.href = `/gamelist`;
+        }
+    }
+  })
+})
+
+</script>
+{% endmacro %}
+
+{%macro game_score(game_config)%}
+<!-- Score Edit Modal -->
+<div class="modal fade" id="editScoreModal" tabindex="-1">
+  <div class="modal-dialog  modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">修改比分</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="scoreForm">
+        <div class="modal-body">
+          <input type="hidden" id="scoreId">
+          <div class="row g-3 p-2">
+            <div class="col-6">
+              <div class="mb-3">
+                <label class="form-label">主队得分</label>
+                <input type="number" class="form-control" id="homeScore" required>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="mb-3">
+                <label class="form-label">客队得分</label>
+                <input type="number" class="form-control" id="awayScore" required>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="submit" class="btn confirmBtn">保存修改</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{%if game_config.games|length == 0 %}
+<div class="w-100 d-flex justify-content-center align-items-center" 
+     style="height:70vh; background-color:white; color:rgb(196, 176, 233);">
+  <h5 class="m-0 text-center text-md-start"> 
+    暂无比赛
+  </h5>
+</div>
+{% else %}
+{% for game in game_config.games%}
+<div id="score-card-{{ loop.index }}">
+  {{render_score_card(loop.index,game)}}
+</div>
+{% endfor %}
+{% endif %}
+<!-- footer -->
+<footer class="fixed-bottom bg-light">
+    <!-- 第一行：版权信息 -->
+    <div class="container-fluid py-2 border-top p-2">
+          <div class="progress" style="height: 20px;">
+            {% set total_games = game_config.games | length %}
+            {% set progress_sum = game_config.games_progress | sum %}
+            {% set percentage = (progress_sum / total_games) * 100 if total_games > 0 else 0 %}
+            <div class="progress-bar" role="progressbar" style="width: {{ percentage | round(1) }}%; background-color:#7A5AB7; " aria-valuenow="{{percentage}}" aria-valuemin="0" aria-valuemax="100">
+              <span class="position-absolute w-100 text-center" style="line-height: 20px; color: black;">
+                {{ progress_sum }}/{{ total_games }}
+              </span>
+            </div>
+          </div>
+    </div>
+    <!-- 第二行 -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container-fluid">
+        <div class="d-flex justify-content-between w-100">
+          <!-- 左侧导航 -->
+          <div class="d-flex align-items-center">
+              <ul class="navbar-nav">
+                <li class="nav-item">
+                  {%if game_config.games|length != 0 %}
+                      <button class="btn btn-sm btn-secondary regenerate-btn">重新生成对阵</button>
+                  {% else %}
+                      <button class="btn btn-sm confirmBtn generate-btn">生成对阵</button>
+                  {% endif %}
+                </li>
+              </ul>
+          </div>
+  
+          <!-- 右侧按钮 -->
+          <div class="d-flex align-items-center">
+            {%if game_config.games|length != 0 %}
+              <button class="btn btn-sm confirmBtn">保存结果</button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </nav>
+  </footer>
+<!-- footer end -->
+
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  // 为所有编辑按钮绑定点击事件
+  document.querySelectorAll('.editScore').forEach(button => {
+    button.addEventListener('click', function(event) {
+      const btn = event.target.closest('.editScore');
+      const matchIdx = btn.dataset.matchIdx;
+      
+      // 填充模态框数据
+      document.getElementById('scoreId').value = matchIdx;
+      editScoreModal.show();
+    });
+  });
+
+  // 提交表单处理
+  document.getElementById('scoreForm').addEventListener('submit', function(e) {
+    e.preventDefault()
+    
+    const formData = {
+      match_idx: document.getElementById('scoreId').value,
+      home: document.getElementById('homeScore').value,
+      away: document.getElementById('awayScore').value
+    }
+    console.log(formData);
+    // 发送更新请求（示例使用fetch API）
+    fetch('/update_score', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log(data);
+      if(data) {
+        editScoreModal.hide();
+        if(data.msg){
+          showMsgModal(data.msg);
+        }else{
+          //window.location.href = `/game`;
+          const targetIdx = parseInt(formData.match_idx) + 1;
+          window.location.href = `/game#score-card-${targetIdx}`;
+          window.location.reload(true);
+        }
+      }
+    })
+  })
+
+});
+</script>
+{% endmacro %}
+
+{%macro game_rank(game_config)%}
+
+{%if game_config.games|length == 0 %}
+<div class="w-100 d-flex justify-content-center align-items-center" 
+     style="height:70vh; background-color:white; color:rgb(196, 176, 233);">
+  <h5 class="m-0 text-center text-md-start"> 
+    暂无比赛
+  </h5>
+</div>
+{% else %}
+  <table class="table rounded-table">
+    <thead>
+      <tr>
+        <th class="col-rank">排名</th>
+        <th class="col-team">组合</th>
+        <th class="col-match">胜局</th>
+        <th class="col-score">胜分</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for member in game_config.ranking %}
+        <tr class="
+          {% if loop.index == 1 %} gold-row {% endif %}
+          {% if loop.index == 2 %} silver-row {% endif %}
+          {% if loop.index == 3 %} bronze-row {% endif %}
+        ">
+          <td class="col-rank align-middle">{{loop.index}}</td>
+          <td class="col-team align-middle ">
+            <div class="d-flex align-items-center gap-2">
+              <img src="{{ url_for('static', filename='uploads/avatars/' + member.player_avatar) }}" 
+                    width="35" height="35" 
+                    class="avatar rounded-circle align-self-center align-middle"
+                    alt="用户头像">
+              <p class="mb-0">{{member.player_name}}</p>
+            </div>
+          </td>
+          <td class="col-match align-middle">
+            <div class="d-flex align-items-center gap-1">
+              <p class="mb-0 fw-bold" style="color:red;">{{member.win_cnt}}</p> 
+              <p class="mb-0">- {{member.loss_cnt}}</p>
+            </div>
+          </td>
+          <td class="col-score align-middle">{{member.net_score}}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+<!-- footer -->
+<footer class="fixed-bottom bg-light">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+      <div class="d-flex justify-content-between w-100">
+        <!-- 左侧导航 -->
+        <div class="d-flex align-items-center">
+            <ul class="navbar-nav">
+              <li class="nav-item">
+                <button class="btn btn-sm btn-secondary" id="rerankBtn">重新计算</button>
+              </li>
+            </ul>
+        </div>
+
+        <!-- 右侧按钮 -->
+        <div class="d-flex align-items-center">
+              <button class="btn btn-sm confirmBtn" id="saveGameResult">保存结果</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+</footer>
+<!-- footer end -->
+
+<style>
+  /* 自定义列宽 */
+  .col-rank { width: 16%; }    /* 排名列 */
+  .col-team { width: 50%; }    /* 组合列 */
+  .col-match { width: 17%; }   /* 胜局列 */
+  .col-score { width: 17%; }   /* 胜分列 */
+  /* 奖牌颜色 */
+  .gold-row td { background-color: #5E2AB7 !important; color: white; box-shadow: 0 0 0 0.5px  #5E2AB7 ;}
+  .silver-row td { background-color: #7A5AB7 !important; color: white; border-color: transparent !important; box-shadow: 0 0 0 0.5px #7A5AB7;}
+  .bronze-row td { background-color: #8B7AB7 !important; color: white; border-color: transparent !important; box-shadow: 0 0 0 0.5px  #8B7AB7;}
+
+  /* 核心样式 */
+  .rounded-table {
+      border-collapse: separate;
+      border-spacing: 0 4px; /* 行间距 */
+      background-color: transparent !important; /* 关键设置 */
+  }
+  .rounded-table thead th {
+      background-color: #f8f9fa;
+      border: none !important;
+      padding-top: 8px;
+      padding-bottom: 8px;
+  }
+  .rounded-table tbody tr {
+      position: relative;
+      transition: all 0.3s ease;
+  }
+  /* 圆角单元格 */
+  .rounded-table td {
+      background-color: white;
+      border: none !important;
+      padding-top: 12px;
+      padding-bottom: 12px;
+      position: relative;
+      z-index: 1; /* 创建堆叠上下文 */
+  }
+  /* 首尾单元格圆角 */
+  .rounded-table td:first-child {
+      border-radius: 12px 0 0 12px;
+  }
+  .rounded-table td:last-child {
+      border-radius: 0 12px 12px 0;
+  }
+</style>
+
+<script>
+document.getElementById('rerankBtn').addEventListener('click', async function rerank(){
+  fetch('/update_ranking', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+          action:"refresh"
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+    console.log(data);
+    if(data) {
+        if(data.msg){
+          showMsgModal(data.msg);
+        }else{
+          window.location.href = `/game`;
+        }
+    }
+  })
+})
+
+document.getElementById('saveGameResult').addEventListener('click', async function saveGameResult(){
+  fetch('/save_ranking', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json'
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+    console.log(data);
+    if(data) {
+        if(data.msg){
+          showMsgModal(data.msg);
+        }else{
+          //window.location.href = `/game`;
+        }
+    }
+  })
+})
+</script>
+{% endmacro %}

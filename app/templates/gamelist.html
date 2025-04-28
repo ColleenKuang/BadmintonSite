@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+{%if games|length == 0 %}
+<div class="w-100 d-flex justify-content-center align-items-center" 
+     style="height:70vh; background-color:white; color:rgb(196, 176, 233);">
+  <h5 class="m-0 text-center text-md-start"> 
+    暂无比赛
+  </h5>
+</div>
+{% else %}
+    {% for game in games%}
+    <div class="card gamecard" data-game-id="{{ game['game_id'] }}">
+        <div class="card-body">
+          {% if game.gametitle %}
+          <h3 class="card-title fw-bold">{{game.gametitle}}</h3>
+          {% else %}
+            <h3 class="card-title fw-bold" id="participantCount">{{game.gametype}}</h3>
+          {% endif %}
+          <div class="d-flex align-items-center gap-2 mt-2">
+            <img src="{{ url_for('static', filename='uploads/avatars/' + game["admin_avatar"]) }}" 
+            width="30" height="30" 
+            class="avatar rounded-circle align-self-center align-middle"
+            alt="用户头像">
+            
+            <p class="mb-0 text-muted">{{game["admin_name"]}}</p>
+          </div>
+          <div class="d-flex gap-2 mt-2">
+            <span class="badge {{ 'badge-custom-purple' if game.status.name == 'READY' else 'bg-secondary' }}">报名</span>
+            <span class="badge {{ 'badge-custom-purple' if game.status.name == 'ING' else 'bg-secondary' }}">计分</span>
+            <span class="badge {{ 'badge-custom-purple' if game.status.name == 'DONE' else 'bg-secondary' }}">完赛</span>
+        </div>
+          <div class="d-flex align-items-center gap-2 mt-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
+                <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
+              </svg>
+            {% if game["gametime"] %}
+              <p class="mb-0 text-muted">{{game["gametime"]}}</p>
+            {% else %}
+            <p class="mb-0 text-muted">时间未定</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+{% endif %}
+
+<!-- 悬浮按钮触发选择模态框 -->
+<div class="floating-btn" onclick="showGameCreationModal()">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+    <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+  </svg>
+</div>
+
+<!-- 创建游戏的选择模态框 -->
+<div class="modal fade" id="gameCreationModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">创建新游戏</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-grid gap-3">
+          <button class="btn badge-custom-purple py-3" onclick="showNewGameForm()">
+            <i class="bi bi-file-earmark-plus me-2"></i>在线新建游戏
+          </button>
+          <button class="btn btn-custom-border py-3" onclick="triggerFileInput()">
+            <i class="bi bi-upload me-2"></i>导入本地Excel/CSV文件
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 隐藏的文件输入 -->
+<input type="file" id="excelInput" accept=".csv,.xlsx,.xls" class="d-none" onchange="handleGameFileUpload(event)">
+
+<!-- 加载遮罩 -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner">
+    <div class="spinner-border text-primary"></div>
+    <div class="mt-2">数据导入中...</div>
+  </div>
+</div>
+{% endblock%}
+
+{% block scripts %}
+{{super()}}
+
+<style>
+  .gamecard{
+      margin-bottom:1.0rem;
+  }
+
+    /* 自定义紫色 */
+  .badge-custom-purple {
+      background-color: #673AB7 !important;
+      color: white !important;
+  }
+
+  .btn-custom-border {
+    border: 2px solid #673AB7 !important;; /* 紫色边框 */
+    border-radius: 8px; /* 圆角 */
+    color: #673AB7 !important;
+  }
+
+  /* 悬浮按钮样式 */
+  .floating-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      background: #673AB7;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+      z-index: 1000;
+  }
+
+  .floating-btn:hover {
+      transform: scale(1.1);
+      background: #7E57C2;
+  }
+
+  /* 隐藏文件输入 */
+  #excelInput {
+      display: none;
+  }
+
+  /* 加载提示 */
+  .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      z-index: 2000;
+  }
+
+  .loading-spinner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+  }
+
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {      
+    // 卡片点击处理
+    document.querySelectorAll('.gamecard').forEach(card => {
+        card.addEventListener('click', function(e) {
+                const gameCard = event.target.closest('.gamecard');
+                if (!gameCard) return;
+            
+                const gameId = gameCard.dataset.gameId;
+                console.log(gameId);
+                handleGameSelection(gameId);
+        })
+    })
+});
+
+// 统一处理函数
+async function handleGameSelection(gameId) {
+    try {            
+        // 显示等待模态框
+        const response = await fetch('/choose_game', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                game_id: gameId
+            })
+        });
+        
+        const data = await response.json();
+        console.log("操作成功:", data);
+        window.location.href = `/game`;
+    } catch (error) {
+        console.error('Error:', error);
+    }
+    
+}
+
+// 显示选择模态框
+function showGameCreationModal() {
+  const modal = new bootstrap.Modal('#gameCreationModal')
+  modal.show()
+}
+
+// 触发文件选择
+function triggerFileInput() {
+  document.getElementById('excelInput').click()
+  bootstrap.Modal.getInstance('#gameCreationModal').hide()
+}
+
+function showNewGameForm() {
+  window.location.href = `/gamemenu`;
+}
+
+function handleGameFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  console.log(file);
+  // 显示加载状态
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.style.display = 'block';
+
+  // 创建表单数据
+  const formData = new FormData();
+  formData.append('game_file', file);
+
+  // 发送请求
+  fetch('/game_import', {
+      method: 'POST',
+      body: formData,
+      headers: {
+          'X-CSRFToken': getCSRFToken() // 需要实现CSRF保护
+      }
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log(data);
+      if (data.msg) {
+        console.log(data.msg|| '导入失败');
+      } else {
+        window.location.href = `/gamelist`;
+      }
+  })
+  .catch(error => {
+      console.log(error.message);
+  })
+  .finally(() => {
+      overlay.style.display = 'none';
+      event.target.value = ''; // 重置输入
+  });
+}
+
+function getCSRFToken() {
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  return meta ? meta.content : '';
+}
+</script>
+{% endblock %}

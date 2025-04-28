@@ -1,0 +1,16 @@
+<ul class="nav nav-tabs nav-fill" id="{{tabName}}-Tab" role="tablist">
+    {% for tab in tabmenu %}
+    {% set active_tab_idx = session.get(tabName ~ '_active_tab_idx', 1) %}
+        <li class="nav-item {{tabName}}-tab-btn" role="presentation">
+            <button class="nav-link {% if loop.index == active_tab_idx %}active{% endif %}" id="{{tab.tabname}}" data-bs-toggle="tab" data-bs-target="#{{tab.tabname}}-pane" type="button" role="tab" aria-controls="{{tab.tabname}}-pane" aria-selected="false">{{tab.tabshowname}}</button>
+        </li>
+    {% endfor %}
+</ul>
+<div class="tab-content" id="myTabContent">
+    {% for tab in tabmenu %}
+    {% set active_tab_idx = session.get(tabName ~ '_active_tab_idx', 1) %}
+        <div class="tab-pane fade {{tabName}}-tab-pane {% if loop.index == active_tab_idx %} show active{% endif %}" id="{{tab.tabname}}-pane" role="tabpanel" aria-labelledby="{{tab.tabname}}">
+            {{tab.tabcontent}}
+        </div>
+    {% endfor %}
+</div>

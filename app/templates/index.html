@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block app_content %}
+<H1>Hello,{{current_user.username}}!</H1>
+<h1>最佳搭档</h1>
+<p class="text-muted mb-0">(只统计组队3次以上的队友)</p>
+<table class="table table-sm">
+    <thead>
+        <tr>
+        <th scope="col">#</th>
+        <th scope="col">用户名</th>
+        <th scope="col">胜率</th>
+        <th scope="col">净胜分</br>(.avg)</th>
+        <th scope="col">组队</br>次数</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in gps%} 
+            <tr class="
+            {% if loop.index == 1 %} fw-bold{% endif %}
+            {% if loop.index == 2 %} fw-bold{% endif %}
+            {% if loop.index == 3 %} fw-bold{% endif %}
+            ">
+                <td scope="row">{{loop.index}}</td>
+                <td>{{item.username}}</td>
+                <td>{{item.win_rate}}</td>
+                <td>{{item.avg_net_score}}</td>
+                <td>{{item.total_matches_with_me}}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h1>克星排行榜</h1>
+<table class="table table-sm">
+    <thead>
+        <tr>
+        <th scope="col">#</th>
+        <th scope="col">用户名</th>
+        <th scope="col">胜率</th>
+        <th scope="col">净胜分</br>(.avg)</th>
+        <th scope="col">胜场</br>数目</th>
+        <th scope="col">对局数</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in bos%} 
+            <tr class="
+            {% if loop.index == 1 %} fw-bold{% endif %}
+            {% if loop.index == 2 %} fw-bold{% endif %}
+            {% if loop.index == 3 %} fw-bold{% endif %}
+            ">
+                <td scope="row">{{loop.index}}</th>
+                <td>{{item.username}}</td>
+                <td>{{item.win_rate}}</td>
+                <td>{{item.avg_net_score}}</td>
+                <td>{{item.wins_against_me}}</td>
+                <td>{{item.total_matches_against_me}}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock%}

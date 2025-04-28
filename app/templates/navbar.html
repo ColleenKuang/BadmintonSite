@@ -1,0 +1,69 @@
+
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+  <div class="container-fluid">
+    <div class="d-flex justify-content-between w-100">
+      <!-- 左侧导航 -->
+      <div class="d-flex align-items-center">
+        <ul class="navbar-nav flex-row align-items-center">
+          <li class="nav-item">
+            <a class="nav-link" href="{{url_for('hello_world')}}">
+              <img src="{{ url_for('static', filename='images/111.png') }}" alt="" width="60" height="60">
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link fw-bold" href="{{url_for('gamemenu')}}">对战</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link fw-bold" href="{{url_for('gamelist')}}">比赛列表</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link fw-bold" href="{{url_for('history')}}">历史</a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- 右侧按钮 -->
+      <div class="d-flex align-items-center">
+          <ul class="navbar-nav flex-row">
+            {% if not current_user.is_authenticated %}
+              <li class="nav-item">
+                <a class="nav-link fw-bold" href="{{url_for('login')}}">登录</a>
+              </li>
+              {% else %}
+              <li class="nav-item align-self-center">
+                <a class="nav-link align-self-center align-middle" href="#">
+                  <img src="{{ url_for('static', filename='uploads/avatars/' + current_user.avatar) }}" 
+                  width="35" height="35" 
+                  class="avatar rounded-circle "
+                  alt="用户头像">
+                
+                </a>
+              </li>
+              <li class="nav-item align-self-center">
+                <a class="nav-link fw-bold" href="{{url_for('logout')}}">登出</a>
+              </li>
+              {% endif %}
+          </ul>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<style>
+  /* 移动端优化 */
+  @media (max-width: 768px) {
+    .navbar {
+      min-width: fit-content;
+      -webkit-overflow-scrolling: touch; /* 平滑滚动 */
+      scrollbar-width: none; /* 隐藏滚动条 */
+    }
+    .navbar::-webkit-scrollbar {
+      display: none; /* 隐藏Webkit滚动条 */
+    }
+    
+    .nav-link {
+      white-space: nowrap; /* 禁止文字换行 */
+      padding: 0.5rem 0.3rem !important;
+    }
+  }
+  </style>

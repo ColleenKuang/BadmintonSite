@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block app_content %}
+
+{# 安全提示 #}
+<div class="alert alert-warning mt-3">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  注意：此页面仅限调试使用，生产环境请勿暴露session详情！
+</div>
+
+<table class="table table-striped mt-4">
+    <thead class="table-dark">
+      <tr>
+        <th scope="col">Session Key</th>
+        <th scope="col">Session Value</th>
+      </tr>
+    </thead>
+    <tbody>
+        {% if session %}
+            {% for key, value in session.items() %}
+            {% if key == "game_config" %}
+                {% for kk, vv in value.items()%}
+                    {%if kk != "games" %}
+                        <tr>
+                            <td class="font-monospace">{{ key}}_{{kk }}</td>
+                            <td>
+                                {# 敏感信息过滤 #}
+                                {% if kk.lower() in ['secret', 'token', 'password'] %}
+                                    <span class="text-danger">****** (已隐藏)</span>
+                                {% else %}
+                                    {{ vv|tojson|safe }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td class="font-monospace">{{ key }}</td>
+                    <td>
+                        {# 敏感信息过滤 #}
+                        {% if key.lower() in ['secret', 'token', 'password'] %}
+                            <span class="text-danger">****** (已隐藏)</span>
+                        {% else %}
+                            {{ value|tojson|safe }}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endif %}
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="3" class="text-center text-muted py-4">
+                    <i class="bi bi-database-exclamation"></i>
+                    当前Session为空
+                </td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
+
+{% if "game_config" in session.keys() %}
+<table class="table">
+    <thead>
+      <tr>
+        <th scope="col">home_team</th>
+        <th scope="col">away_team</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in session["game_config"]["games"]%}   
+        <tr>
+            <td>{{item["home_team"]}}</td>
+            <td>{{item["away_team"]}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+{% endblock %}

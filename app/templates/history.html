@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block app_content %}
+<!--
+<div id="scoreChart"></div>
+-->
+
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}  <!-- 保留父模板的bootstrap等JS -->
+<script src="{{ url_for('static', filename='js/plotly-3.0.1.js') }}"></script>
+<script>
+// 页面加载完成后渲染图表
+document.addEventListener('DOMContentLoaded', function() {
+    const graphData = {{ graph_data | safe }};
+    const layout = {
+        xaxis: { 
+            title: '时间',
+            // 显式禁用轴交互
+            fixedrange: true  // ← 新增关键配置
+        },
+        yaxis: { 
+            title: '分数',
+            fixedrange: true  // ← 新增关键配置
+        },
+        showlegend: false,
+        // 确保布局不覆盖配置
+        dragmode: false  // ← 防止布局参数覆盖
+    };
+
+    const config = {
+        staticPlot: true,
+        scrollZoom: false,
+        dragMode: false,
+        modeBarButtonsToRemove: [
+            'toImage', 'zoom2d', 'pan2d', 'select2d', 'lasso2d',  // 完整移除工具栏
+            'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d'
+        ]
+    };
+
+    // 验证配置是否传递正确
+    console.log('使用的Plotly版本:', Plotly.version);
+    console.log('生效配置:', config);
+
+    // 正确传参方式
+    Plotly.newPlot(
+        'scoreChart', 
+        graphData,  // 数据数组
+        layout,       // 布局对象
+        config        // 配置对象（必须作为第4参数）
+    );
+
+    // 添加CSS加固
+    document.getElementById('scoreChart').style.pointerEvents = 'none';
+});
+</script>
+{% endblock %}

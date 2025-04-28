@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+  <!-- msgModal -->
+  <div id="messageModal" class="modal fade" >
+      <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+          <div class="modal-header">
+          <h5 class="modal-title">系统提示</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+          <p id="modalMessage"></p>
+          </div>
+          <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+          </div>
+      </div>
+      </div>
+  </div>
+  <!--createMatchModal-->
+  <div class="modal fade" id="createMatchModal" tabindex="-1" aria-labelledby="createMatchModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+          <div class="modal-header">
+          <h5 class="modal-title" id="createMatchModalLabel">创建新比赛</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+          确定要创建比赛：<span id="modalMatchTitle"></span> 吗？
+          </div>
+          <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-primary confirmBtn" id="confirmCreate">确认创建</button>
+          </div>
+      </div>
+      </div>
+  </div>
+
+  {% include 'tabbase.html' %}
+  {% block tab_content %}{% endblock %}
+{% endblock%}
+
+{% block scripts %}
+  {{ super() }} 
+  <style>
+    /* 点击反馈效果 */
+    .clickable-card {
+      transition: transform 0.1s;
+      cursor: pointer;
+    }
+    .clickable-card:active {
+      transform: scale(0.98);
+    }
+    /* 基础样式 */
+    .nav-tabs .nav-link {
+      background-color: #D1C4E9;  /* 非激活状态的背景色 */
+      color: #333;                /* 非激活状态的文字颜色 */
+      border: none;               /* 移除默认边框 */
+    }
+
+    /* 激活状态 */
+    .nav-tabs .nav-link.active {
+      background-color: #673AB7 !important;  
+      color: white !important;
+    }
+
+    /* 卡片 */
+    .cardbtn{
+      background-color: #673AB7 !important;
+      color: white !important;
+      border: none; 
+    }
+
+    /* */ 
+    .confirmBtn{
+      background-color: #512DA8 !important;
+      color: white !important;
+      border: none; 
+    }
+  </style>
+  <script>
+    const msgModal = new bootstrap.Modal(document.getElementById('messageModal'));
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // 初始化 Modal
+        const createModal = new bootstrap.Modal(document.getElementById('createMatchModal'))
+        const modalTitle = document.getElementById('modalMatchTitle')
+        const confirmBtn = document.getElementById('confirmCreate')
+      
+        // 卡片点击处理
+        document.querySelectorAll('.clickable-card').forEach(card => {
+          card.addEventListener('click', function(e) {
+            // 如果点击的是按钮则返回
+            if (e.target.closest('button')) return      
+      
+            // 获取比赛信息
+            const title = this.querySelector('.card-title').textContent
+            const gametype = this.dataset.gameType;
+            const available = this.dataset.gameAvailable === 'True'; 
+            console.log(available);
+
+            if(!available){
+              console.log("msgModal");
+              showMsgModal("当前项目还未开发");
+            }else{
+              // 更新 Modal 内容
+              modalTitle.textContent = title
+              
+              // 显示 Modal
+              createModal.show()
+        
+              // 确认按钮处理
+              confirmBtn.onclick = async function() {
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> 创建中...';
+
+                try {
+                    const response = await fetch('/game/create', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            game_type: gametype,
+                            title: title
+                        })
+                    });
+            
+                    const data = await response.json();
+            
+                    if (!response.ok) {
+                        throw new Error(data.message || '创建比赛失败');
+                    }
+                    
+                    // 跳转到新创建的游戏页面
+                    window.location.href = '/game';
+                  
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert(error.message);
+                } finally {
+                    createModal.hide();
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = '确认创建';
+                }
+
+              }
+            }
+   
+          })
+        });
+    })
+  
+    async function showMsgModal(message) {
+      document.getElementById('modalMessage').textContent = message;
+        msgModal.show();
+      
+        // 可选：3秒后自动关闭
+        setTimeout(() => msgModal.hide(), 3000);
+    }
+    
+  
+  </script>
+{% endblock %}
+
