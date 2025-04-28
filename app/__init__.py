@@ -32,56 +32,56 @@ double_event_list = [
             'id': "double-1",
             'title': '多人轮转赛',
             'description': '适合水平差距小',
-            'image_url': '/static/images/event1.jpg',
+            'image_url': '/static/images/event2.png',
             'avaliable': "True",
         },
         {
             'id': "double-2",
             'title': '固搭循环赛',
             'description': '适合固定搭档',
-            'image_url': '/static/images/event1.jpg',
+            'image_url': '/static/images/event2.png',
             'avaliable': "True",
         },
         {
             'id': "double-3",
             'title': 'A+B匹配赛',
             'description': '适合强带弱',
-            'image_url': '/static/images/event1.jpg',
+            'image_url': '/static/images/event2.png',
             'avaliable': "True",
         },
         {
             'id': "double-4",
             'title': '固搭擂台赛',
             'description': '组队挑战擂主',
-            'image_url': '/static/images/event1.jpg',
+            'image_url': '/static/images/no event.png',
             'avaliable': False
         },
         {
             'id': "double-5",
             'title': '匹配擂台赛',
             'description': '配队友挑战擂主',
-            'image_url': '/static/images/event1.jpg',
+            'image_url': '/static/images/no event.png',
             'avaliable': False
         },
         {
             'id': "double-6",
             'title': '单败淘汰赛',
             'description': '敬请期待',
-            'image_url': '/static/images/event1.jpg',
+            'image_url': '/static/images/no event.png',
             'avaliable': False
         },
         {
             'id': "double-7",
             'title': '双败淘汰赛',
             'description': '敬请期待',
-            'image_url': '/static/images/event1.jpg',
+            'image_url': '/static/images/no event.png',
             'avaliable': False
         },
         {
             'id': "double-8",
             'title': '血战到底',
             'description': '敬请期待',
-            'image_url': '/static/images/event1.jpg',
+            'image_url': '/static/images/no event.png',
             'avaliable': False
         },
     ]
@@ -91,21 +91,21 @@ single_event_list = [
             'id': "single-1",
             'title': '单打循环赛',
             'description': '适合固定搭档',
-            'image_url': '/static/images/event1.jpg',
+            'image_url': '/static/images/no event.png',
             'avaliable': False
         },
         {
             'id': "single-2",
             'title': '单打擂台赛',
             'description': '组队挑战擂主',
-            'image_url': '/static/images/event1.jpg',
+            'image_url': '/static/images/no event.png',
             'avaliable': False
         },
         {
             'id': "single-3",
             'title': '单打淘汰赛',
             'description': '适合强带弱',
-            'image_url': '/static/images/event1.jpg',
+            'image_url': '/static/images/no event.png',
             'avaliable': False
         },
 ]
@@ -115,28 +115,28 @@ team_event_list = [
         'id': "team-1",
         'title': '团队对位赛',
         'description': '适合团队间PK',
-        'image_url': '/static/images/event1.jpg',
+        'image_url': '/static/images/no event.png',
         'avaliable': False
     },
     {
         'id': "team-2",
         'title': '五羽轮比',
         'description': '适合固定搭档',
-        'image_url': '/static/images/event1.jpg',
+        'image_url': '/static/images/no event.png',
         'avaliable': False
     },
     {
         'id': "team-3",
         'title': '团队固搭赛',
         'description': '适合固定搭档',
-        'image_url': '/static/images/event1.jpg',
+        'image_url': '/static/images/no event.png',
         'avaliable': False
     },
     {
         'id': "team-4",
         'title': '经典团队赛',
         'description': '适合队伍对抗',
-        'image_url': '/static/images/event1.jpg',
+        'image_url': '/static/images/no event.png',
         'avaliable': False
     },
 ]

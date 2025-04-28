@@ -4,7 +4,7 @@
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">请输入数字</h5>
+              <h5 class="modal-title">请输入人均局数</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
               <div class="modal-body">
@@ -320,48 +320,34 @@
     })
 
     async function getmatchesPerPlayer() {
-        // 初始化模态框
         const numberModal = new bootstrap.Modal(document.getElementById('numberModal'));
         
-        // 返回Promise以便等待用户输入
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             // 确认按钮点击处理
             document.getElementById('confirmNumberBtn').onclick = () => {
-            const matchCount = document.getElementById('matchCountInput').value;
-            numberModal.hide();
-            resolve(matchCount); // 返回用户输入的值
+                const matchCount = document.getElementById('matchCountInput').value;
+                numberModal.hide();
+                resolve(matchCount);
             };
-            
-            // 显示模态框
+    
+            // 新增：监听模态框关闭事件（包括点击叉号、按ESC、点击遮罩）
+            numberModal._element.addEventListener('hidden.bs.modal', () => {
+                // 检查是否已经resolve过（避免重复触发）
+                if (!resolve.called) {
+                    reject(new Error('Modal closed without input'));
+                }
+            });
+    
+            // 标记resolve是否被调用过
+            resolve.called = false;
+            const originalResolve = resolve;
+            resolve = (value) => {
+                resolve.called = true;
+                originalResolve(value);
+            };
+    
             numberModal.show();
         });
-    }
-
-    async function generateGames(){
-        matchesPerPlayer = await getmatchesPerPlayer();
-        try{
-          const response = await fetch('/generate_matches', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                matchesPerPlayer: matchesPerPlayer
-            })
-          });
-          
-          const data = await response.json();
-          console.log("操作成功:", data);
-          if(data.msg){
-            await showMsgModal(data.msg);
-          }else{
-            window.location.href = `/game`;
-          }
-          
-        } catch (error) {
-            console.error('Error:', error);
-        }
-
     }
 
     // regenerateBtn
@@ -396,7 +382,24 @@
                     });
         
                     if (isConfirmed) {
-                        await generateGames();
+                        const matchesPerPlayer = await getmatchesPerPlayer();
+                        const response = await fetch('/generate_matches', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                matchesPerPlayer: matchesPerPlayer
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        console.log("操作成功:", data);
+                        if(data.msg){
+                            await showMsgModal(data.msg);
+                        }else{
+                            window.location.href = `/game`;
+                        }
                     }
         
                 } catch (error) {
@@ -407,29 +410,49 @@
             });
         });
     });
+    
     // generateBtn
     document.addEventListener('DOMContentLoaded', () => {
         const generatebuttons = document.querySelectorAll('.generate-btn');
-        let currentActiveButton = null; // 记录当前操作的按钮
-      
-        // 为所有按钮绑定事件
+        let currentActiveButton = null;
+    
         generatebuttons.forEach(button => {
-          button.addEventListener('click', async function() {
-            try {
-              currentActiveButton = this; // 保存当前点击的按钮引用
-              currentActiveButton.disabled = true;
-              await generateGames();
-            } catch (error) {
-              console.error('操作失败:', error);
-              // 可以在这里添加错误提示
-            } finally {
-              if (currentActiveButton) {
-                currentActiveButton.disabled = false;
-                currentActiveButton = null;
-              }
-            }
-          });
+            button.addEventListener('click', async function() {
+                currentActiveButton = this;
+                currentActiveButton.disabled = true;
+                
+                try {
+                    const matchesPerPlayer = await getmatchesPerPlayer();
+                    const response = await fetch('/generate_matches', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            matchesPerPlayer: matchesPerPlayer
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    console.log("操作成功:", data);
+                    if(data.msg){
+                        await showMsgModal(data.msg);
+                    }else{
+                        window.location.href = `/game`;
+                    }
+                } catch (error) {
+                    if (error.message !== 'Modal closed without input') {
+                        console.error('操作失败:', error);
+                        // 可以在这里添加其他错误提示
+                    }
+                } finally {
+                    if (currentActiveButton) {
+                        currentActiveButton.disabled = false;
+                        currentActiveButton = null;
+                    }
+                }
+            });
         });
-      });
+    });
 </script>
 {% endblock %}
