@@ -5,6 +5,7 @@ from sqlalchemy import func, select, and_, case, event, PrimaryKeyConstraint, Ch
 from sqlalchemy.exc import SQLAlchemyError,IntegrityError
 import pandas as pd
 import csv
+from datetime import datetime, timezone
 class Gender(Enum):
     MALE = "male"
     FEMALE = "female"
@@ -92,6 +93,8 @@ class PlayGames(db.Model):
     net_score = db.Column(db.Integer,nullable=True,)
     result = db.Column(db.Enum(MatchResultType),nullable=True,)
     
+    updated_at = db.Column(db.DateTime(timezone=True), default=lambda:datetime.now(timezone.utc), onupdate=lambda:datetime.now(timezone.utc))
+    
     # 定义与用户和比赛的关系（便于ORM查询）
     player = db.relationship('Users', backref='played_games')
     match = db.relationship('Games', backref='participants')
@@ -100,9 +103,9 @@ class PlayGames(db.Model):
         return "<PlayGames {}-{} team-{} player_id-{} score:{} >\n".format(self.game_id, self.match_idx, self.team,self.player_id,self.score)
     
 def get_player_stats(player_id: str, game_id: str) -> dict:
-    print("get_player_stats")
-    print(player_id)
-    print(game_id)
+    # print("get_player_stats")
+    # print(player_id)
+    # print(game_id)
     try:
         # 定义聚合表达式
         win_cnt = func.count(

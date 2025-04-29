@@ -4,15 +4,24 @@
 <table class="table">
   <thead>
     <tr>
-      <th scope="col">home_team</th>
-      <th scope="col">away_team</th>
+      <th scope="col">game_id</th>
+      <th scope="col">match_idx</th>
+      <th scope="col">team</th>
+      <th scope="col">player_id</th>
+      <th scope="col">score</th>
+      <th scope="col">updated_at</th>
     </tr>
   </thead>
   <tbody>
     {% for item in playgames%}   
       <tr>
-          <td>{{item}}</td>
-    </tr>
+        <td>{{item.game_id}}</td>
+        <td>{{item.match_idx}}</td>
+        <td>{{item.team}}</td>
+        <td>{{item.player_id}}</td>
+        <td>{{item.score}}</td>
+        <td>{{item.updated_at}}</td>
+      </tr>
     {% endfor %}
   </tbody>
 </table>

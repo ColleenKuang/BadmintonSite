@@ -10,7 +10,7 @@ import os,json
 from app.games import double_mode_1, double_mode_2, double_mode_3
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import and_, desc
-from datetime import datetime
+from datetime import datetime, timezone
 import pytz 
 # app.route(rule, options)装饰器
 # rule - 函数绑定对应的URL
@@ -229,6 +229,7 @@ def update_member():
         print("update_member",data)
         # add quota
         if data['action'] == 'add':
+            print(data['action'])
             if(data['gametype'] in ['double-1']):
                 session["game_config"]["member_list"].append("")
             elif(data['gametype'] in ['double-2','double-3']):
@@ -236,6 +237,7 @@ def update_member():
                 session["game_config"]["member_list"].append("")
         # minus quota
         if data['action'] == 'minus':
+            print(data['action'])
             if len(session["game_config"]["member_list"]) == 4:
                 return jsonify({"status": "success","msg": "不能少于4人"}), 200
             
@@ -261,15 +263,14 @@ def update_member():
         # 检查索引是否越界
         if idx >= len(session["game_config"]["member_list"]):
             return jsonify({"status": "error", "msg": "索引越界"}), 400
-        
-        
-        
+
         if data['action'] == 'cancel':
-            print("cancel")
+            print(data['action'])
             session["game_config"]["member_list"][idx] = ""
             
         memberlist = [d["id"] for d in session["game_config"]["member_list"] if isinstance(d,dict)]
         if data['action'] == 'self':    
+            print(data['action'])
             if (current_user.id in memberlist):
                 print("user already exist.")
                 return jsonify({"status": "success","msg": "用户已存在"}), 200
@@ -278,7 +279,8 @@ def update_member():
                                                           "username":current_user.username,
                                                           "gender":1 if current_user.gender == Gender.MALE else 0}
         
-        if data['action'] == 'other':   
+        if data['action'] == 'other':  
+            print(data['action'])
             new_members = [Users.query.filter_by(id=int(user_id)).first() for user_id in data["selected_ids"] if Users.query.filter_by(id=int(user_id)).first().id not in memberlist]
             print(new_members) 
             if len(new_members) == 1:
@@ -305,7 +307,6 @@ def update_member():
         game = Games.query.filter_by(id=session['game_id']).first()
         game.signup_data = json.dumps(session["game_config"]["member_list"])
         db.session.commit()
-        print("update session:\n",session["game_config"])
         return jsonify({"status": "success"}), 200
     except Exception as e:
         print(str(e))
@@ -444,8 +445,11 @@ def player_ranking(game_id,member_list):
 def update_score():
     data = request.get_json()
     print("update_score:", data)
-
+    
     # ---------- 数据验证 ----------
+    # 0. 检查updated_at时间戳
+    
+    
     # 1. 检查必要字段
     required_fields = ['home', 'away', 'match_idx']
     for field in required_fields:
@@ -474,22 +478,29 @@ def update_score():
         return jsonify({"status": "error", "msg": "比分不能相同"}), 400
     
     try:
-        print(PlayGames.query.filter_by(
-            game_id=session['game_id'],
-            match_idx=data['match_idx'],
-            team=TeamType.HOME_TEAM
-        ).all())
+        client_updated_at = datetime.fromisoformat(data['client_updated_at'])
         updated_rows = PlayGames.query.filter_by(
             game_id=session['game_id'],
             match_idx=data['match_idx'],
-            team=TeamType.HOME_TEAM
+            team=TeamType.HOME_TEAM,
+            updated_at = client_updated_at
         ).update({
             "score": home_score,
             "net_score": (home_score - away_score),
-            "result": MatchResultType.WIN if (home_score > away_score) else MatchResultType.LOSS
+            "result": MatchResultType.WIN if (home_score > away_score) else MatchResultType.LOSS.name,
         })
         db.session.commit()
         print(f"批量更新 {updated_rows} 条记录")
+        if updated_rows == 0:
+            exists = PlayGames.query.filter_by(
+                game_id=session['game_id'],
+                match_idx=data['match_idx'],
+                team=TeamType.HOME_TEAM,
+            )
+            
+            if exists:
+                return jsonify({"status": "success","msg":"数据已被其他用户修改,请刷新页面"}), 200
+        
         updated_rows = PlayGames.query.filter_by(
             game_id=session['game_id'],
             match_idx=data['match_idx'],
@@ -632,12 +643,13 @@ def save_ranking():
             "debug": str(e)  # 生产环境应移除 debug 信息
         }), 500
         
+# TODO game_member加载问题
 def double_matches_reloading(matches, game_config):
     for i in range(len(matches)):
         ats = []
         hts = []
-        ht_re = list(db.session.query(PlayGames.player_id).filter(PlayGames.game_id==session['game_id'],PlayGames.match_idx==str(i),PlayGames.team==TeamType.HOME_TEAM).all())
-        at_re = list(db.session.query(PlayGames.player_id).filter(PlayGames.game_id==session['game_id'],PlayGames.match_idx==str(i),PlayGames.team==TeamType.AWAY_TEAM).all())
+        ht_re = list(db.session.query(PlayGames.player_id,PlayGames.updated_at).filter(PlayGames.game_id==session['game_id'],PlayGames.match_idx==str(i),PlayGames.team==TeamType.HOME_TEAM).all())
+        at_re = list(db.session.query(PlayGames.player_id,PlayGames.updated_at).filter(PlayGames.game_id==session['game_id'],PlayGames.match_idx==str(i),PlayGames.team==TeamType.AWAY_TEAM).all())
         for p in ht_re:
             re = db.session.query(Users.id,Users.username,Users.avatar,Users.gender).filter(Users.id==str(p[0])).first()
             re = dict(re._asdict())
@@ -652,13 +664,13 @@ def double_matches_reloading(matches, game_config):
             if(re["id"] not in [g["id"] for g in game_config["member_list"]]):
                 game_config["member_list"].append(re)
             ats.append(re)
-        
         game_config["games"].append(
             {
                 "away_team": ats,
                 "home_team": hts,
                 "score": [db.session.query(PlayGames.score).filter(PlayGames.game_id==session['game_id'],PlayGames.match_idx==str(i),PlayGames.team==TeamType.HOME_TEAM).first()[0],
-                            db.session.query(PlayGames.score).filter(PlayGames.game_id==session['game_id'],PlayGames.match_idx==str(i),PlayGames.team==TeamType.AWAY_TEAM).first()[0]]
+                            db.session.query(PlayGames.score).filter(PlayGames.game_id==session['game_id'],PlayGames.match_idx==str(i),PlayGames.team==TeamType.AWAY_TEAM).first()[0]],
+                "updated_at":ht_re[0].updated_at
             }
         )
         if sum(game_config["games"][-1]["score"]) > 0:
