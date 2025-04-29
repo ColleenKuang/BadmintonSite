@@ -1,4 +1,4 @@
-from flask import render_template, redirect, flash, url_for, request, session, jsonify
+from flask import render_template, redirect, flash, url_for, request, session, jsonify, current_app, abort
 from app import app, db, bcrypt, cors, Config, double_event_list, single_event_list, team_event_list
 from app.forms import RegisterForm, LoginForm
 from app.models import Users, Games, PlayGames, GameHistory
@@ -66,45 +66,72 @@ def register():
         
     return render_template("register.html",form = form)
 
-@app.route('/login', methods=['GET','POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    # 已登录用户重定向
     if current_user.is_authenticated:
         return redirect(url_for('hello_world'))
     
     form = LoginForm()
-    if form.is_submitted():  # 仅检查表单是否提交，不自动验证
-        if form.register_btn.data:
-            # 点击注册按钮直接跳转
+    
+    # 仅处理POST请求（更安全）
+    if request.method == 'POST':
+        # 注册按钮处理
+        if 'register_btn' in request.form:
             return redirect(url_for('register'))
-        elif form.login_btn.data:
-            # 只有当点击登录按钮时才执行验证
+        
+        # 登录按钮处理
+        if 'login_btn' in request.form:
+            # 前端非空检查（基础验证）
+            if not form.username.data or not form.password.data:
+                flash("用户名和密码不能为空", category='danger')
+                return render_template("login.html", form=form)
+            
+            # WTForms完整验证
             if form.validate():
-                username = form.username.data
-                password = form.password.data
-                remember = form.remember.data
-                if len(username) == 0:
-                    flash("username cannot be empty",category='danger')
-                    return render_template("login.html",form = form)
-                if len(password) == 0:
-                    flash("please enter password",category='danger')
-                    return render_template("login.html",form = form)
-                user = Users.query.filter_by(username = username).first()
+                user = Users.query.filter_by(username=form.username.data).first()
+                
+                # 用户存在性检查
                 if not user:
-                    flash("User not exists, Please register",category='danger')
+                    flash("用户不存在，请先注册", category='danger')
                     return redirect(url_for('register'))
-                elif not bcrypt.check_password_hash(user.password, password):
-                    flash("Password not match",category='danger')
-                else:
-                    login_user(user, remember=remember)
-                    # flash('Login Success', category='info')
-                    if request.args.get('next'):
-                        next_page = request.args.get('next')
-                        if next_page in ["/", "/index"]:
-                            next_page = "hello_world"
-                        print(next_page)
-                        return redirect(url_for(next_page))
-                    return redirect(url_for('hello_world'))
-    return render_template("login.html",form = form)
+                
+                # 密码验证（带防时序攻击）
+                try:
+                    if not bcrypt.check_password_hash(user.password, form.password.data):
+                        flash("密码错误", category='danger')
+                        # 记录失败尝试（安全审计）
+                        current_app.logger.warning(f"Failed login attempt for user: {form.username.data}")
+                        return render_template("login.html", form=form)
+                except ValueError as e:
+                    current_app.logger.error(f"Password hash error: {str(e)}")
+                    flash("系统错误，请稍后再试", category='danger')
+                    return render_template("login.html", form=form)
+                
+                # 登录成功
+                login_user(user, remember=form.remember.data)
+                
+                # 安全的重定向处理
+                next_page = request.args.get('next')
+                if next_page:
+                    # 验证next参数是否安全
+                    if not is_safe_url(next_page):
+                        return abort(400)
+                    return redirect(next_page)
+                return redirect(url_for('hello_world'))
+            
+            # 表单验证失败
+            flash("请检查输入内容", category='danger')
+    
+    return render_template("login.html", form=form)
+
+# 安全URL检查函数
+def is_safe_url(target):
+    from urllib.parse import urlparse, urljoin
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return test_url.scheme in ('http', 'https') and \
+           ref_url.netloc == test_url.netloc
 
 @app.route("/logout")
 def logout():
