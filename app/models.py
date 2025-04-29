@@ -65,9 +65,10 @@ class Games(db.Model):
     status = db.Column(db.Enum(GameStatus), default = GameStatus.READY)
     title = db.Column(db.String(50), default = "")
     rule = db.Column(db.String(100), default = "")
+    signup_data = db.Column(db.JSON, default=list)
     
     def __repr__(self):
-        return "<Game-{}-{}-{} Admin:{} Time:{} Location:{} Rule:{}>".format(self.id, self.title, self.game_type, self.creator_id, self.timestamp, self.location, self.rule)
+        return "<Game-{}-{}-{} Admin:{} Time:{} Location:{} Rule:{} Signed_data:{}>".format(self.id, self.title, self.game_type, self.creator_id, self.timestamp, self.location, self.rule, self.signup_data)
 
 class PlayGames(db.Model):
     __table_args__ = (

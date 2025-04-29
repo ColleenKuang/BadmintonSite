@@ -227,14 +227,14 @@ def update_member():
     try:
         data = request.get_json()
         print("update_member",data)
-        
+        # add quota
         if data['action'] == 'add':
             if(data['gametype'] in ['double-1']):
                 session["game_config"]["member_list"].append("")
             elif(data['gametype'] in ['double-2','double-3']):
                 session["game_config"]["member_list"].append("")
                 session["game_config"]["member_list"].append("")
-            
+        # minus quota
         if data['action'] == 'minus':
             if len(session["game_config"]["member_list"]) == 4:
                 return jsonify({"status": "success","msg": "不能少于4人"}), 200
@@ -261,6 +261,8 @@ def update_member():
         # 检查索引是否越界
         if idx >= len(session["game_config"]["member_list"]):
             return jsonify({"status": "error", "msg": "索引越界"}), 400
+        
+        
         
         if data['action'] == 'cancel':
             print("cancel")
@@ -300,6 +302,9 @@ def update_member():
         
         session["game_active_tab_idx"] = 1
         session.modified = True
+        game = Games.query.filter_by(id=session['game_id']).first()
+        game.signup_data = json.dumps(session["game_config"]["member_list"])
+        db.session.commit()
         print("update session:\n",session["game_config"])
         return jsonify({"status": "success"}), 200
     except Exception as e:
@@ -316,9 +321,10 @@ def choose_game():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# TODO modify PlayGame records into one
 def record_double_schedule(schedule):
     games = []
-    print("generate")
+    print("record")
     for idx, g in enumerate(schedule):
         print(g)
         t00 = session["game_config"]["member_list"][g[0][0]]
@@ -664,7 +670,6 @@ def single_matches_reloading(matches, game_config):
 
 @app.route("/game")
 def game():
-    # TODO 处理session["game_id"] = -1的情况，gamelist里没有任何游戏
     print("game_id: ",session['game_id'])
     game = Games.query.filter_by(id=session['game_id']).first()
     admin = db.session.query(Users.username,Users.avatar,Users.id).filter(Users.id==game.creator_id).first()
@@ -679,48 +684,45 @@ def game():
     if game.game_type.split("-")[0] == "team":
         gameshowtitle = team_event_list[idx]["title"]
     
-    # 初始化
-    # 两种情况，刷新session里的game_config
-    # 1. 刚登陆，第一次访问game页面
-    # 2. 之前访问过别的game_id的页面
-    if ("game_config" not in session.keys()) or (session['game_id'] != session.get("game_config", {}).get("game_id", None)):
-        game_config = {
-            "admin": dict(admin._asdict()),
-            "game_id": session['game_id'],
-            "gametype": game.game_type,
-            "gametime": game.timestamp,
-            "gametitle": game.title,
-            "gamerule": game.rule,
-            "gameshowtitle": gameshowtitle,
-            "member_list" : [""] * 6 if len(matches) == 0 else [],
-            "games":[],
-            "ranking":[],
-            "games_progress" : [0] * len(matches)
-        }
+    game_config = {
+        "admin": dict(admin._asdict()),
+        "game_id": session['game_id'],
+        "gametype": game.game_type,
+        "gametime": game.timestamp,
+        "gametitle": game.title,
+        "gamerule": game.rule,
+        "gameshowtitle": gameshowtitle,
+        "member_list" : [""] * 6 if len(matches) == 0 else [],
+        "games":[],
+        "ranking":[],
+        "games_progress" : [0] * len(matches)
+    }
+    
+    # if game.status == GameStatus.READY:
+    if len(matches) == 0:
+        game_config["member_list"] = json.loads(game.signup_data)
+        game_config["ranking"] = []
+        for m in game_config["member_list"]:
+            if m=="": continue
+            game_config["ranking"].append({
+            "player_id": m["id"],
+            "player_name": m["username"],
+            "player_avatar": m["avatar"],
+            "win_cnt": 0,
+            "loss_cnt": 0,
+            "net_score": 0,
+        }) 
+    else:
         print("matches:",matches)
         if game.game_type.split("-")[0] == "double":
             double_matches_reloading(matches=matches, game_config=game_config) 
         if game.game_type.split("-")[0] == "single":
             single_matches_reloading(matches=matches, game_config=game_config)
-
-        if(game.status == GameStatus.DONE):
-            game_config["ranking"] = player_ranking(session['game_id'],game_config["member_list"])
-        else:
-            # 初始化ranking
-            game_config["ranking"] = []
-            for m in game_config["member_list"]:
-                if m=="": continue
-                game_config["ranking"].append({
-                "player_id": m["id"],
-                "player_name": m["username"],
-                "player_avatar": m["avatar"],
-                "win_cnt": 0,
-                "loss_cnt": 0,
-                "net_score": 0,
-            })            
             
-        session["game_config"] = game_config
-    print("debug-memberlist:",session["game_config"]["member_list"],len(session["game_config"]["member_list"]))
+        game_config["ranking"] = player_ranking(session['game_id'],game_config["member_list"])
+
+    
+    session["game_config"] = game_config
     game_info = app.jinja_env.get_template("macros.html").module.game_info
     game_score = app.jinja_env.get_template("macros.html").module.game_score
     game_rank = app.jinja_env.get_template("macros.html").module.game_rank
@@ -810,6 +812,7 @@ def gamelist():
 
 @app.route('/history')
 @login_required
+# TODO history func
 def history():
     # 获取数据
     scores_df = get_game_scores(user_id=current_user.id, game_id="2")
