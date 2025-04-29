@@ -203,6 +203,9 @@ def create_game():
 @login_required
 def remove_game():
     try:
+        if current_user.id != session["game_config"]["admin"]["id"]:
+            return jsonify({"status": "success","msg":"你不是管理员，无权限删除"}), 200
+        
         PlayGames.query.filter_by(game_id=session["game_id"]).delete()
         Games.query.filter_by(id=session["game_id"]).delete()
         db.session.commit()
