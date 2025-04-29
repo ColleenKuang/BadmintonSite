@@ -20,6 +20,7 @@
 <table class="table">
   <thead>
     <tr>
+      <th scope="col">id</th>
       <th scope="col">creator_id</th>
       <th scope="col">gametype</th>
       <th scope="col">status</th>
@@ -28,9 +29,10 @@
   <tbody>
     {% for item in games%}   
       <tr>
-          <td>{{item.creator_id}}</td>
-          <td>{{item.game_type}}</td>
-          <td>{{item.status}}</td>
+        <td>{{item.id}}</td>
+        <td>{{item.creator_id}}</td>
+        <td>{{item.game_type}}</td>
+        <td>{{item.status}}</td>
     </tr>
     {% endfor %}
   </tbody>

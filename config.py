@@ -5,7 +5,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 print(basedir)
 class Config(object):
     # APP MODE
-    DEBUG = False
+    DEBUG = True
     
     SESSION_TYPE = 'redis'
     

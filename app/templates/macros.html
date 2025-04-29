@@ -845,25 +845,23 @@ minusBtn.addEventListener('click', (e) => {
   });
 })
 
-document.getElementById('removeGame').addEventListener('click', (e)=>{
-  fetch('/api/remove_game', {
+document.getElementById('removeGame').addEventListener('click', async (e) => {
+  try {
+    const response = await fetch('/api/remove_game', {
       method: 'POST',
-      headers: {
-          'Content-Type': 'application/json'
-      },
-    })
-    .then(response => response.json())
-    .then(data => {
-    console.log(data);
-    if(data) {
-        if(data.msg){
-          showMsgModal(data.msg);
-        }else{
-          window.location.href = `/gamelist`;
-        }
+    });
+
+    const data = await response.json();
+    if (data.msg) {
+      await showMsgModal(data.msg);
+    } else {
+      window.location.href = '/gamelist';
     }
-  })
-})
+  } catch (error) {
+    console.error('删除游戏失败:', error);
+    await showMsgModal('删除游戏时出错，请重试');
+  }
+});
 
 </script>
 {% endmacro %}

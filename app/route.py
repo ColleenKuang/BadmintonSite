@@ -203,8 +203,10 @@ def create_game():
 @login_required
 def remove_game():
     try:
+        print("current id: {} admin_id:{}".format(current_user.id,session["game_config"]["admin"]["id"]))
         if current_user.id != session["game_config"]["admin"]["id"]:
             return jsonify({"status": "success","msg":"你不是管理员，无权限删除"}), 200
+        
         
         PlayGames.query.filter_by(game_id=session["game_id"]).delete()
         Games.query.filter_by(id=session["game_id"]).delete()
@@ -665,8 +667,9 @@ def game():
     # TODO 处理session["game_id"] = -1的情况，gamelist里没有任何游戏
     print("game_id: ",session['game_id'])
     game = Games.query.filter_by(id=session['game_id']).first()
-    admin = db.session.query(Users.username,Users.avatar).filter(Users.id==game.creator_id).first()
-    
+    admin = db.session.query(Users.username,Users.avatar,Users.id).filter(Users.id==game.creator_id).first()
+    # 按 match_idx
+    matches = PlayGames.query.filter(PlayGames.game_id==session['game_id']).group_by(PlayGames.match_idx).all()
     gameshowtitle = ""
     idx = int(game.game_type.split("-")[1]) - 1
     if game.game_type.split("-")[0] == "double":
@@ -680,10 +683,7 @@ def game():
     # 两种情况，刷新session里的game_config
     # 1. 刚登陆，第一次访问game页面
     # 2. 之前访问过别的game_id的页面
-    # if ("game_config" not in session.keys()) or (session['game_id'] != session.get("game_config", {}).get("game_id", None)):
-    if(True):
-        # 按 match_idx
-        matches = PlayGames.query.filter(PlayGames.game_id==session['game_id']).group_by(PlayGames.match_idx).all()
+    if ("game_config" not in session.keys()) or (session['game_id'] != session.get("game_config", {}).get("game_id", None)):
         game_config = {
             "admin": dict(admin._asdict()),
             "game_id": session['game_id'],
@@ -698,7 +698,6 @@ def game():
             "games_progress" : [0] * len(matches)
         }
         print("matches:",matches)
-        
         if game.game_type.split("-")[0] == "double":
             double_matches_reloading(matches=matches, game_config=game_config) 
         if game.game_type.split("-")[0] == "single":
