@@ -101,10 +101,10 @@ def login():
                     if not bcrypt.check_password_hash(user.password, form.password.data):
                         flash("密码错误", category='danger')
                         # 记录失败尝试（安全审计）
-                        current_app.logger.warning(f"Failed login attempt for user: {form.username.data}")
+                        # current_app.logger.warning(f"Failed login attempt for user: {form.username.data}")
                         return render_template("login.html", form=form)
                 except ValueError as e:
-                    current_app.logger.error(f"Password hash error: {str(e)}")
+                    # current_app.logger.error(f"Password hash error: {str(e)}")
                     flash("系统错误，请稍后再试", category='danger')
                     return render_template("login.html", form=form)
                 
@@ -165,7 +165,7 @@ def gamemenu():
     
     return render_template("gamemenu.html",tabmenu=tabmenu)
 
-@app.route('/game/create', methods=['POST'])
+@app.route('/api/create_game', methods=['POST'])
 @login_required
 def create_game():
     # 验证请求数据
@@ -199,24 +199,25 @@ def create_game():
             "message": f"数据库错误: {str(e)}"
         }), 500
 
-@app.route('/remove_game', methods=['POST'])
+@app.route('/api/remove_game', methods=['POST'])
 @login_required
 def remove_game():
     try:
-        Games.query.filter_by(id=session["game_id"]).delete()
-        db.session.commit()
-        
         PlayGames.query.filter_by(game_id=session["game_id"]).delete()
+        Games.query.filter_by(id=session["game_id"]).delete()
         db.session.commit()
         
         session.pop('game_config', None)
         
         return jsonify({"status": "success"}), 200
+    except KeyError as e:
+        print(f"未找到游戏ID: {str(e)}")
+        return jsonify({"status": "error", "msg": str(e)}), 400
     except Exception as e:
         print(f"Game移除错误: {str(e)}")
         return jsonify({"status": "error", "msg": str(e)}), 400
 
-@app.route('/update_member', methods=['POST'])
+@app.route('/api/update_member', methods=['POST'])
 def update_member():      
     try:
         data = request.get_json()
@@ -300,7 +301,7 @@ def update_member():
         print(str(e))
         return jsonify({"status": "error","msg": str(e)}), 500
 
-@app.route('/choose_game', methods=['POST'])
+@app.route('/api/choose_game', methods=['POST'])
 def choose_game():
     try:
         data = request.get_json()
@@ -375,7 +376,7 @@ def record_double_schedule(schedule):
 def record_single_schedule(schedule):
     pass
 
-@app.route('/generate_matches', methods=['POST'])
+@app.route('/api/generate_matches', methods=['POST'])
 def generate_games():
     try:        
         deleted_count = PlayGames.query.filter(
@@ -428,7 +429,7 @@ def player_ranking(game_id,member_list):
 
     return ranking
 
-@app.route('/update_score', methods=['POST'])
+@app.route('/api/update_score', methods=['POST'])
 def update_score():
     data = request.get_json()
     print("update_score:", data)
@@ -512,7 +513,7 @@ def update_score():
         print(f"Session 数据异常: {str(e)}")
         return jsonify({"status": "error", "msg": "比赛信息丢失"}), 400
 
-@app.route('/update_ranking', methods=['POST'])
+@app.route('/api/update_ranking', methods=['POST'])
 def update_ranking():
     try: 
         data = request.get_json()
@@ -528,7 +529,7 @@ def update_ranking():
         print(f"排名错误: {str(e)}")
         return jsonify({"status": "error", "msg": "排名更新操作失败"}), 400
         
-@app.route('/save_ranking',methods=['POST'])     
+@app.route('/api/save_ranking',methods=['POST'])     
 def save_ranking():
     try:
         # 基础验证
@@ -658,6 +659,7 @@ def single_matches_reloading(matches, game_config):
 
 @app.route("/game")
 def game():
+    # TODO 处理session["game_id"] = -1的情况，gamelist里没有任何游戏
     print("game_id: ",session['game_id'])
     game = Games.query.filter_by(id=session['game_id']).first()
     admin = db.session.query(Users.username,Users.avatar).filter(Users.id==game.creator_id).first()
@@ -675,7 +677,8 @@ def game():
     # 两种情况，刷新session里的game_config
     # 1. 刚登陆，第一次访问game页面
     # 2. 之前访问过别的game_id的页面
-    if ("game_config" not in session.keys()) or (session['game_id'] != session.get("game_config", {}).get("game_id", None)):
+    # if ("game_config" not in session.keys()) or (session['game_id'] != session.get("game_config", {}).get("game_id", None)):
+    if(True):
         # 按 match_idx
         matches = PlayGames.query.filter(PlayGames.game_id==session['game_id']).group_by(PlayGames.match_idx).all()
         game_config = {
@@ -807,8 +810,8 @@ def gamelist():
 @login_required
 def history():
     # 获取数据
-    # scores_df = get_game_scores(user_id=current_user.id)
-    scores_df = get_game_scores(user_id="4")
+    scores_df = get_game_scores(user_id=current_user.id, game_id="2")
+    # scores_df = get_game_scores(user_id="4")
     
     # 转换为 Plotly 需要的格式
     graph_data = [{

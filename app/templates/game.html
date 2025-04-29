@@ -297,7 +297,7 @@
     });
 
     document.getElementById('game_rank').addEventListener('click', async function ranking(){
-        fetch('/update_ranking', {
+        fetch('/api/update_ranking', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -383,7 +383,7 @@
         
                     if (isConfirmed) {
                         const matchesPerPlayer = await getmatchesPerPlayer();
-                        const response = await fetch('/generate_matches', {
+                        const response = await fetch('/api/generate_matches', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -423,7 +423,7 @@
                 
                 try {
                     const matchesPerPlayer = await getmatchesPerPlayer();
-                    const response = await fetch('/generate_matches', {
+                    const response = await fetch('/api/generate_matches', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

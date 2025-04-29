@@ -116,7 +116,7 @@
                 confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> 创建中...';
 
                 try {
-                    const response = await fetch('/game/create', {
+                    const response = await fetch('/api/create_game', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

@@ -167,7 +167,7 @@
 
 {%macro double_1(game_config)%}
 <!-- gamelist content -->   
-<ol class="list-group list-group-numbered">
+<ul class="list-group list-group-numbered">
   {% for member in game_config.member_list %}
       {% if member =="" %}
           <li class="list-group-item clickable-member" data-id='{{loop.index0}}'>空位</li>
@@ -181,7 +181,7 @@
           </li>
       {% endif %}
   {% endfor %}
-</ol>
+</ul>
 {% endmacro %}
 
 {%macro double_2(game_config)%}
@@ -732,7 +732,7 @@ function submitSelection() {
   const userIds = Array.from(checkedBoxes).map(checkbox => checkbox.dataset.userId);
   
   // 发送到服务器（示例使用 fetch）
-  fetch('/update_member', {
+  fetch('/api/update_member', {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json',
@@ -802,7 +802,7 @@ async function handleMemberChange(actiontype, gametype) {
       // 显示等待模态框
       await showModalWithAnimation();
       console.log(request_body);
-      const response = await fetch('/update_member', {
+      const response = await fetch('/api/update_member', {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
@@ -846,7 +846,7 @@ minusBtn.addEventListener('click', (e) => {
 })
 
 document.getElementById('removeGame').addEventListener('click', (e)=>{
-  fetch('/remove_game', {
+  fetch('/api/remove_game', {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'
@@ -987,7 +987,7 @@ document.addEventListener('DOMContentLoaded',function(){
     }
     console.log(formData);
     // 发送更新请求（示例使用fetch API）
-    fetch('/update_score', {
+    fetch('/api/update_score', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -1134,7 +1134,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
 <script>
 document.getElementById('rerankBtn').addEventListener('click', async function rerank(){
-  fetch('/update_ranking', {
+  fetch('/api/update_ranking', {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'
@@ -1157,7 +1157,7 @@ document.getElementById('rerankBtn').addEventListener('click', async function re
 })
 
 document.getElementById('saveGameResult').addEventListener('click', async function saveGameResult(){
-  fetch('/save_ranking', {
+  fetch('/api/save_ranking', {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'

@@ -1,9 +1,7 @@
 from app import db, login
 from flask_login import UserMixin 
 from enum import Enum
-from datetime import datetime
 from sqlalchemy import func, select, and_, case, event, PrimaryKeyConstraint, CheckConstraint, text
-from sqlalchemy.orm import aliased
 from sqlalchemy.exc import SQLAlchemyError,IntegrityError
 import pandas as pd
 import csv
@@ -183,14 +181,14 @@ class GameHistory(db.Model):
     def __repr__(self):
         return "<GameHistory Game_id{} player_id-{} rank{} win-loss:{}-{}>\n".format(self.game_id,self.player_id,self.ranking,self.win_cnt,self.loss_cnt)
     
-def get_game_scores(user_id):
+def get_game_scores(user_id, game_id):
     matches = db.session.query(
                     PlayGames.match_idx,
                     PlayGames.score,
                     PlayGames.net_score
                 ).filter(
                     PlayGames.player_id==user_id,
-                    PlayGames.game_id=="2"
+                    PlayGames.game_id==game_id
                 ).all()
 
     re = {

@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
 async function handleGameSelection(gameId) {
     try {            
         // 显示等待模态框
-        const response = await fetch('/choose_game', {
+        const response = await fetch('/api/choose_game', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
