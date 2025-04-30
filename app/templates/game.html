@@ -180,7 +180,14 @@
     const regenerateConfirmModal = new bootstrap.Modal('#regenerateConfirmModal');
     const editModal = new bootstrap.Modal('#editModal');
     let selectedPlayers = [];
-    // 封装的动画控制函数
+    
+    // CSRF令牌获取函数
+    function getCSRFToken() {
+        return document.querySelector('[name=csrf-token]')?.content || 
+            document.querySelector('input[name="_csrf_token"]')?.value ||
+            '';
+    }
+
     async function safeHideModal() {
         return new Promise((resolve) => {
         loadingModal.hide();
@@ -200,7 +207,15 @@
         msgModal.show();
       
         // 可选：3秒后自动关闭
-        setTimeout(() => msgModal.hide(), 3000);
+        setTimeout(() => {
+            msgModal.hide();
+            //location.reload(true);
+        }, 3000);
+
+        // 确保模态框完全关闭后再刷新
+        document.getElementById('messageModal').addEventListener('hidden.bs.modal', function() {
+            location.reload(true); // 强制从服务器重新加载
+        }, { once: true });
     }
     
     async function saveTitle(content){

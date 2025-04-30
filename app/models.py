@@ -67,6 +67,7 @@ class Games(db.Model):
     title = db.Column(db.String(50), default = "")
     rule = db.Column(db.String(100), default = "")
     signup_data = db.Column(db.JSON, default=list)
+    updated_at = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda:datetime.now(timezone.utc), onupdate=lambda:datetime.now(timezone.utc))
     
     def __repr__(self):
         return "<Game-{}-{}-{} Admin:{} Time:{} Location:{} Rule:{} Signed_data:{}>".format(self.id, self.title, self.game_type, self.creator_id, self.timestamp, self.location, self.rule, self.signup_data)
@@ -93,7 +94,7 @@ class PlayGames(db.Model):
     net_score = db.Column(db.Integer,nullable=True,)
     result = db.Column(db.Enum(MatchResultType),nullable=True,)
     
-    updated_at = db.Column(db.DateTime(timezone=True), default=lambda:datetime.now(timezone.utc), onupdate=lambda:datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda:datetime.now(timezone.utc), onupdate=lambda:datetime.now(timezone.utc))
     
     # 定义与用户和比赛的关系（便于ORM查询）
     player = db.relationship('Users', backref='played_games')
@@ -430,3 +431,7 @@ def find_best_opponent(my_id):
 #     tables=[PlayGames.__table__],  # 明确指定要删除的表
 #     checkfirst=True  # 如果表不存在则跳过
 # )
+
+# flask db stamp head - Alembic 的命令，它用于将数据库的版本标记为当前迁移的最新版本（即“head”）
+# 你已经手动执行了迁移脚本，或在数据库中做了一些修改，但迁移版本和数据库的版本记录不同步时，可以用它来修复。
+

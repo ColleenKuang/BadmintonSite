@@ -173,12 +173,12 @@ def create_game():
     if not data or 'game_type' not in data or 'title' not in data:
         return jsonify({"success": False, "message": "无效的请求参数"}), 400
 
-    print(data)
     # 创建新游戏记录
     try:
         new_game = Games(
             game_type=data['game_type'],
-            creator_id=current_user.id
+            creator_id=current_user.id,
+            signup_data=json.dumps([""] * 6)
         )
         
         db.session.add(new_game)
@@ -227,6 +227,9 @@ def update_member():
     try:
         data = request.get_json()
         print("update_member",data)
+        if session["game_config"]["gamestatus"] == GameStatus.DONE.value:
+            return jsonify({"status": "success","msg":"比赛已完结不可修改"}), 200
+        
         # add quota
         if data['action'] == 'add':
             print(data['action'])
@@ -307,6 +310,10 @@ def update_member():
         game = Games.query.filter_by(id=session['game_id']).first()
         game.signup_data = json.dumps(session["game_config"]["member_list"])
         db.session.commit()
+        
+        if session["game_config"]["gamestatus"] == GameStatus.ING.value:
+            return jsonify({"status": "success","msg":"比赛正在进行，有人员更改，需要重新生成对局"}), 200
+        
         return jsonify({"status": "success"}), 200
     except Exception as e:
         print(str(e))
@@ -332,14 +339,9 @@ def record_double_schedule(schedule):
         t01 = session["game_config"]["member_list"][g[0][1]]
         t10 = session["game_config"]["member_list"][g[1][0]]
         t11 = session["game_config"]["member_list"][g[1][1]]
-        print(t00)
-        print(t01)
-        print(t10)
-        print(t11)
         ht_match_type = MatchType.MIX_DOUBLE if t00["gender"] != t01["gender"] else MatchType.MEN_DOUBLE if t00["gender"] == 1 else MatchType.WOMEN_DOUBLE
         at_match_type = MatchType.MIX_DOUBLE if t10["gender"] != t11["gender"] else MatchType.MEN_DOUBLE if t11["gender"] == 1 else MatchType.WOMEN_DOUBLE
-        print(ht_match_type)
-        print(at_match_type)
+        current_time = datetime.now(timezone.utc)
         records_to_add = [
             PlayGames(
                 match_idx = idx,
@@ -347,7 +349,8 @@ def record_double_schedule(schedule):
                 game_id = session['game_id'],
                 team = TeamType.HOME_TEAM,
                 match_type = ht_match_type,
-                score = 0
+                score = 0,
+                updated_at=current_time
             ),
             PlayGames(
                 match_idx = idx,
@@ -355,7 +358,8 @@ def record_double_schedule(schedule):
                 game_id = session['game_id'],
                 team = TeamType.HOME_TEAM,
                 match_type = ht_match_type,
-                score = 0
+                score = 0,
+                updated_at=current_time
             ),
             PlayGames(
                 match_idx = idx,
@@ -363,7 +367,8 @@ def record_double_schedule(schedule):
                 game_id = session['game_id'],
                 team = TeamType.AWAY_TEAM,
                 match_type = at_match_type,
-                score = 0
+                score = 0,
+                updated_at=current_time
             ),
             PlayGames(
                 match_idx = idx,
@@ -371,7 +376,8 @@ def record_double_schedule(schedule):
                 game_id = session['game_id'],
                 team = TeamType.AWAY_TEAM,
                 match_type = at_match_type,
-                score = 0
+                score = 0,
+                updated_at=current_time
             )
         ]
         print(records_to_add)
@@ -390,6 +396,29 @@ def record_single_schedule(schedule):
 
 @app.route('/api/generate_matches', methods=['POST'])
 def generate_games():
+    # ---------- 数据验证 ----------
+    # 1. 检查当前game的状态
+    if session["game_config"]["gamestatus"] == GameStatus.DONE.value:
+            return jsonify({"status": "success","msg":"比赛已完结不可修改"}), 200
+        
+    # 2. 检查必要字段
+    data = request.get_json()
+    required_fields = ['matchesPerPlayer']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"status": "error", "msg": f"缺少必填字段 {field}"}), 400
+
+    # 3. 验证数值类型
+    try:
+        matchesPerPlayer = int(data["matchesPerPlayer"])
+    except (ValueError, TypeError):
+        return jsonify({"status": "error", "msg": "人均局数要为正整数"}), 400
+
+    # 4. 验证数值范围
+    if matchesPerPlayer <= 0:
+        return jsonify({"status": "error", "msg": "人均局数要为正数"}), 400
+    
+    # ---------- 数据录入 ----------
     try:        
         deleted_count = PlayGames.query.filter(
             getattr(PlayGames, "game_id") == session['game_id']
@@ -397,8 +426,6 @@ def generate_games():
         print("del count:",deleted_count)
         db.session.commit()
         
-        data = request.get_json()
-        matchesPerPlayer = int(data["matchesPerPlayer"])
         if session["game_config"]["gametype"] == "double-1":
             re = double_mode_1(session['game_config']["member_list"], matches_per_player=matchesPerPlayer)
         if session["game_config"]["gametype"] == "double-2":
@@ -425,7 +452,6 @@ def player_ranking(game_id,member_list):
     for m in member_list:
         if m == "": continue
         re = get_player_stats(player_id=m["id"], game_id=game_id)
-        print(re)
         ranking.append({
             "player_id": re["player_id"],
             "player_name": m["username"],
@@ -447,9 +473,6 @@ def update_score():
     print("update_score:", data)
     
     # ---------- 数据验证 ----------
-    # 0. 检查updated_at时间戳
-    
-    
     # 1. 检查必要字段
     required_fields = ['home', 'away', 'match_idx']
     for field in required_fields:
@@ -477,8 +500,12 @@ def update_score():
     if home_score == away_score:
         return jsonify({"status": "error", "msg": "比分不能相同"}), 400
     
+    # TODO 5. check member list 
+    
+    # ---------- 数据录入 ----------
     try:
         client_updated_at = datetime.fromisoformat(data['client_updated_at'])
+        current_time = datetime.now(timezone.utc)
         updated_rows = PlayGames.query.filter_by(
             game_id=session['game_id'],
             match_idx=data['match_idx'],
@@ -488,9 +515,10 @@ def update_score():
             "score": home_score,
             "net_score": (home_score - away_score),
             "result": MatchResultType.WIN if (home_score > away_score) else MatchResultType.LOSS.name,
-        })
+            "updated_at": current_time
+        }, synchronize_session=False)
         db.session.commit()
-        print(f"批量更新 {updated_rows} 条记录")
+        # print(f"批量更新 {updated_rows} 条记录")
         if updated_rows == 0:
             exists = PlayGames.query.filter_by(
                 game_id=session['game_id'],
@@ -504,18 +532,22 @@ def update_score():
         updated_rows = PlayGames.query.filter_by(
             game_id=session['game_id'],
             match_idx=data['match_idx'],
-            team=TeamType.AWAY_TEAM
+            team=TeamType.AWAY_TEAM,
+            updated_at = client_updated_at
         ).update({
             "score": away_score,
             "net_score": (away_score - home_score),
-            "result": MatchResultType.WIN if away_score > home_score else MatchResultType.LOSS
-        })
+            "result": MatchResultType.WIN if away_score > home_score else MatchResultType.LOSS,
+            "updated_at": current_time
+        }, synchronize_session=False)
         db.session.commit()
-        print(f"批量更新 {updated_rows} 条记录")
+        # print(f"批量更新 {updated_rows} 条记录")
             
         session["game_config"]["games"][int(data['match_idx'])]["score"] = [home_score, away_score]
         session["game_active_tab_idx"] = 2
         session["game_config"]["games_progress"][int(data['match_idx'])] = 1
+        
+        # 每次更新分数，就重新计算一次排名
         re = update_ranking()
         if re[1] == 200:
             game = Games.query.filter_by(id=session['game_id']).first()
@@ -609,9 +641,7 @@ def save_ranking():
         
         try:
             game = Games.query.filter_by(id=session['game_id']).first()
-            print("save_ranking Status:", game.status)
             game.status = GameStatus.DONE
-            print("save_ranking Status:", game.status)
             db.session.commit()
         except Exception as e:
             print(f"Game Status Update Err: {str(e)}")
@@ -643,7 +673,6 @@ def save_ranking():
             "debug": str(e)  # 生产环境应移除 debug 信息
         }), 500
         
-# TODO game_member加载问题
 def double_matches_reloading(matches, game_config):
     for i in range(len(matches)):
         ats = []
@@ -654,15 +683,11 @@ def double_matches_reloading(matches, game_config):
             re = db.session.query(Users.id,Users.username,Users.avatar,Users.gender).filter(Users.id==str(p[0])).first()
             re = dict(re._asdict())
             re["gender"] = 1 if re["gender"] == Gender.MALE else 0
-            if(re["id"] not in [g["id"] for g in game_config["member_list"]]):
-                game_config["member_list"].append(re)
             hts.append(re)
         for p in at_re:
             re = db.session.query(Users.id,Users.username,Users.avatar,Users.gender).filter(Users.id==str(p[0])).first()
             re = dict(re._asdict())
             re["gender"] = 1 if re["gender"] == Gender.MALE else 0
-            if(re["id"] not in [g["id"] for g in game_config["member_list"]]):
-                game_config["member_list"].append(re)
             ats.append(re)
         game_config["games"].append(
             {
@@ -704,7 +729,8 @@ def game():
         "gametitle": game.title,
         "gamerule": game.rule,
         "gameshowtitle": gameshowtitle,
-        "member_list" : [""] * 6 if len(matches) == 0 else [],
+        "member_list" : json.loads(game.signup_data),
+        "gamestatus": game.status.value,
         "games":[],
         "ranking":[],
         "games_progress" : [0] * len(matches)
@@ -712,7 +738,6 @@ def game():
     
     # if game.status == GameStatus.READY:
     if len(matches) == 0:
-        game_config["member_list"] = json.loads(game.signup_data)
         game_config["ranking"] = []
         for m in game_config["member_list"]:
             if m=="": continue
@@ -731,7 +756,7 @@ def game():
         if game.game_type.split("-")[0] == "single":
             single_matches_reloading(matches=matches, game_config=game_config)
             
-        game_config["ranking"] = player_ranking(session['game_id'],game_config["member_list"])
+        # game_config["ranking"] = player_ranking(session['game_id'],game_config["member_list"])
 
     
     session["game_config"] = game_config

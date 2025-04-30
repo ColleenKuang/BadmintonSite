@@ -723,32 +723,31 @@ cancelMenu.addEventListener('click', (e) => {
 });
 
 // submit selected player
-function submitSelection() {
-  // 方法1：直接使用 selectedPlayers 数组
+async function submitSelection() {
   console.log('最终选中用户ID:', selectedPlayers);
-  
-  // 方法2：即时收集所有选中项
-  const checkedBoxes = document.querySelectorAll('.form-check-input:checked');
-  const userIds = Array.from(checkedBoxes).map(checkbox => checkbox.dataset.userId);
-  
-  // 发送到服务器（示例使用 fetch）
-  fetch('/api/update_member', {
-      method: 'POST',
-      headers: {
-          'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        action: "other",
-        selected_ids: userIds,
-        selected_idx: currentSelectedMember_idx,
-      })
-  })
-  .then(response => response.json())
-  .then(data => {
-      console.log('提交成功:', data);
-      chooseotherModal.hide();
-      location.reload();
+  await showModalWithAnimation();
+  const response = await fetch('/api/update_member', { 
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCSRFToken()
+    },
+    body: JSON.stringify({ 
+      action: "other",
+      selected_ids: selectedPlayers,
+      selected_idx: currentSelectedMember_idx,
+    })
   });
+  
+  const data = await response.json();
+  chooseotherModal.hide();
+  await safeHideModal();
+  
+  if (data.msg) {
+    await showMsgModal(data.msg);// 3秒后刷新，让用户有时间阅读错误消息
+  }else{
+    location.reload(true);
+  }
 }
 
 // select players
@@ -758,7 +757,6 @@ function toggleSelection(itemElement, event) {
     
     const checkbox = itemElement.querySelector('.form-check-input')
     const userId = checkbox.dataset.userId
-    console.log(userId);
     // 切换选中状态
     checkbox.checked = !checkbox.checked
     
@@ -770,8 +768,6 @@ function toggleSelection(itemElement, event) {
         selectedPlayers = selectedPlayers.filter(id => id !== userId)
         itemElement.classList.remove('selected')
     }
-    
-    console.log('当前选中:', selectedPlayers)
 }
 
 function toggleAll(state) {
@@ -812,16 +808,16 @@ async function handleMemberChange(actiontype, gametype) {
       
       const data = await response.json();
       console.log("操作成功:", data);
+      await safeHideModal();
       if (data.msg) {
-        console.log(data.msg);
+        //console.log(data.msg);
         await showMsgModal(data.msg);
       }else{
-        //location.reload();
+        location.reload();
       }
   } catch (error) {
       console.error('Error:', error);
   } finally {
-    await safeHideModal();
   }
   
 }
@@ -1004,9 +1000,9 @@ document.addEventListener('DOMContentLoaded',function(){
           showMsgModal(data.msg);
         }else{
           //window.location.href = `/game`;
-          //const targetIdx = parseInt(formData.match_idx) + 1;
-          //window.location.href = `/game#score-card-${targetIdx}`;
-          //window.location.reload(true);
+          const targetIdx = parseInt(formData.match_idx) + 1;
+          window.location.href = `/game#score-card-${targetIdx}`;
+          window.location.reload(true);
         }
       }
     })
