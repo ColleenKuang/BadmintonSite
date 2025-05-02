@@ -14,6 +14,7 @@ class GameStatus(Enum):
     READY = 0
     ING = 1
     DONE = 2
+    ERR = 3
     
 class TeamType(Enum):
     HOME_TEAM = 0

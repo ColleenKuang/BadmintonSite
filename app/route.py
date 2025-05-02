@@ -306,14 +306,17 @@ def update_member():
                     idx += 1
         
         session["game_active_tab_idx"] = 1
-        session.modified = True
         game = Games.query.filter_by(id=session['game_id']).first()
         game.signup_data = json.dumps(session["game_config"]["member_list"])
-        db.session.commit()
         
         if session["game_config"]["gamestatus"] == GameStatus.ING.value:
+            game.status = GameStatus.ERR
+            session.modified = True
+            db.session.commit()
             return jsonify({"status": "success","msg":"比赛正在进行，有人员更改，需要重新生成对局"}), 200
         
+        session.modified = True
+        db.session.commit()
         return jsonify({"status": "success"}), 200
     except Exception as e:
         print(str(e))
@@ -401,6 +404,7 @@ def generate_games():
     if session["game_config"]["gamestatus"] == GameStatus.DONE.value:
             return jsonify({"status": "success","msg":"比赛已完结不可修改"}), 200
         
+
     # 2. 检查必要字段
     data = request.get_json()
     required_fields = ['matchesPerPlayer']
@@ -441,6 +445,8 @@ def generate_games():
         session["game_config"]["games_progress"] = [0] * len(session["game_config"]["games"])
         session["game_active_tab_idx"] = 2
         session["game_config"]["ranking"] = []
+        if session["game_config"]["gamestatus"] == GameStatus.ERR.value:
+            session["game_config"]["gamestatus"] == GameStatus.READY.value
         return jsonify({"status": "success"}), 200
     except Exception as e:
         db.session.rollback()
@@ -473,6 +479,10 @@ def update_score():
     print("update_score:", data)
     
     # ---------- 数据验证 ----------
+    # 0. 检查游戏状态
+    if session["game_config"]["gamestatus"] == GameStatus.ERR.value:
+        return jsonify({"status": "success","msg":"比赛设置异常，请重新生成对局"}), 200
+    
     # 1. 检查必要字段
     required_fields = ['home', 'away', 'match_idx']
     for field in required_fields:
@@ -499,9 +509,7 @@ def update_score():
 
     if home_score == away_score:
         return jsonify({"status": "error", "msg": "比分不能相同"}), 400
-    
-    # TODO 5. check member list 
-    
+        
     # ---------- 数据录入 ----------
     try:
         client_updated_at = datetime.fromisoformat(data['client_updated_at'])
@@ -750,7 +758,6 @@ def game():
             "net_score": 0,
         }) 
     else:
-        print("matches:",matches)
         if game.game_type.split("-")[0] == "double":
             double_matches_reloading(matches=matches, game_config=game_config) 
         if game.game_type.split("-")[0] == "single":
