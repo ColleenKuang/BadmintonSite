@@ -446,7 +446,11 @@ def generate_games():
         session["game_active_tab_idx"] = 2
         session["game_config"]["ranking"] = []
         if session["game_config"]["gamestatus"] == GameStatus.ERR.value:
-            session["game_config"]["gamestatus"] == GameStatus.READY.value
+            game = Games.query.filter_by(id=session['game_id']).first()
+            game.status = GameStatus.READY
+            db.session.commit()
+            
+        session.modified = True
         return jsonify({"status": "success"}), 200
     except Exception as e:
         db.session.rollback()
