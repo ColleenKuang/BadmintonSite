@@ -712,7 +712,7 @@ def double_matches_reloading(matches, game_config):
         )
         if sum(game_config["games"][-1]["score"]) > 0:
             game_config["games_progress"][i] = 1        
-        
+    
 # TODO 单打比赛预加载        
 def single_matches_reloading(matches, game_config):
     pass
@@ -767,7 +767,7 @@ def game():
         if game.game_type.split("-")[0] == "single":
             single_matches_reloading(matches=matches, game_config=game_config)
             
-        # game_config["ranking"] = player_ranking(session['game_id'],game_config["member_list"])
+        game_config["ranking"] = player_ranking(session['game_id'],game_config["member_list"])
 
     
     session["game_config"] = game_config
