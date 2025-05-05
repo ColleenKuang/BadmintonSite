@@ -97,10 +97,6 @@ class PlayGames(db.Model):
     
     updated_at = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda:datetime.now(timezone.utc), onupdate=lambda:datetime.now(timezone.utc))
     
-    # 定义与用户和比赛的关系（便于ORM查询）
-    player = db.relationship('Users', backref='played_games')
-    match = db.relationship('Games', backref='participants')
-    
     def __repr__(self):
         return "<PlayGames {}-{} team-{} player_id-{} score:{} >\n".format(self.game_id, self.match_idx, self.team,self.player_id,self.score)
     

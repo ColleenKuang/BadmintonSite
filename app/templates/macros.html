@@ -299,7 +299,7 @@
         {% do existing_ids.append(member.id) %}
     {% endif %}
 {% endfor %}
-<div class="card pt-2">
+<div class="card pt-2" id="gameinfo" data-updated-at="{{ game_config.updated_at.isoformat() }}">
     <div class="card-body">
         <!-- game title -->
         <div class="d-flex align-items-center gap-2">
@@ -736,6 +736,7 @@ async function submitSelection() {
       action: "other",
       selected_ids: selectedPlayers,
       selected_idx: currentSelectedMember_idx,
+      client_updated_at: document.getElementById('gameinfo').dataset.updatedAt
     })
   });
   
@@ -787,12 +788,14 @@ async function handleMemberChange(actiontype, gametype) {
     request_body = JSON.stringify({
         action: actiontype,
         selected_idx: currentSelectedMember_idx,
+        client_updated_at: document.getElementById('gameinfo').dataset.updatedAt
     })
 
   if (actiontype == "add" || actiontype == "minus")
       request_body = JSON.stringify({
             action:  actiontype,
-            gametype: gametype
+            gametype: gametype,
+            client_updated_at: document.getElementById('gameinfo').dataset.updatedAt
         })
   try {            
       // 显示等待模态框

@@ -227,9 +227,21 @@ def update_member():
     try:
         data = request.get_json()
         print("update_member",data)
+        session["game_active_tab_idx"] = 1
+        # Step 1. 预先检查
+        game = Games.query.filter_by(id=session['game_id']).first()
+        client_updated_at = datetime.fromisoformat(data['client_updated_at'])
+        # TODO 
+        print("updated_at checking: ")
+        print(client_updated_at)
+        print(game.updated_at)
+        if (client_updated_at != game.updated_at):
+            return jsonify({"status": "success","msg":"数据已被其他用户修改,请刷新页面"}), 200
+        
         if session["game_config"]["gamestatus"] == GameStatus.DONE.value:
             return jsonify({"status": "success","msg":"比赛已完结不可修改"}), 200
         
+        # Step 2. 分情况处理
         # add quota
         if data['action'] == 'add':
             print(data['action'])
@@ -240,7 +252,6 @@ def update_member():
                 session["game_config"]["member_list"].append("")
         # minus quota
         if data['action'] == 'minus':
-            print(data['action'])
             if len(session["game_config"]["member_list"]) == 4:
                 return jsonify({"status": "success","msg": "不能少于4人"}), 200
             
@@ -268,12 +279,10 @@ def update_member():
             return jsonify({"status": "error", "msg": "索引越界"}), 400
 
         if data['action'] == 'cancel':
-            print(data['action'])
             session["game_config"]["member_list"][idx] = ""
             
         memberlist = [d["id"] for d in session["game_config"]["member_list"] if isinstance(d,dict)]
         if data['action'] == 'self':    
-            print(data['action'])
             if (current_user.id in memberlist):
                 print("user already exist.")
                 return jsonify({"status": "success","msg": "用户已存在"}), 200
@@ -283,7 +292,6 @@ def update_member():
                                                           "gender":1 if current_user.gender == Gender.MALE else 0}
         
         if data['action'] == 'other':  
-            print(data['action'])
             new_members = [Users.query.filter_by(id=int(user_id)).first() for user_id in data["selected_ids"] if Users.query.filter_by(id=int(user_id)).first().id not in memberlist]
             print(new_members) 
             if len(new_members) == 1:
@@ -305,11 +313,10 @@ def update_member():
                                                                 "gender":1 if other.gender == Gender.MALE else 0}
                     idx += 1
         
-        session["game_active_tab_idx"] = 1
-        game = Games.query.filter_by(id=session['game_id']).first()
-        game.signup_data = json.dumps(session["game_config"]["member_list"])
         
-        if session["game_config"]["gamestatus"] == GameStatus.ING.value:
+        # 汇总处理结果存到数据库里
+        game.signup_data = json.dumps(session["game_config"]["member_list"])
+        if session["game_config"]["gamestatus"] == GameStatus.ING.value or session["game_config"]["gamestatus"] == GameStatus.ERR.value:
             game.status = GameStatus.ERR
             session.modified = True
             db.session.commit()
@@ -745,7 +752,8 @@ def game():
         "gamestatus": game.status.value,
         "games":[],
         "ranking":[],
-        "games_progress" : [0] * len(matches)
+        "games_progress" : [0] * len(matches),
+        "updated_at":game.updated_at
     }
     
     # if game.status == GameStatus.READY:
