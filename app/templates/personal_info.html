@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block head %}
+{{super()}}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+{% endblock %}
+{% block app_content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <!-- 头像展示区域 -->
+                    <div class="text-center mb-4">
+                        <div class="avatar-container">
+                            <img id="avatarPreview" 
+                                 src="{{ url_for('static', filename='uploads/avatars/' + user.avatar) }}" 
+                                 class="avatar-preview"
+                                 alt="用户头像">
+                        </div>
+                        <button class="btn btn-outline-primary mt-3" data-bs-toggle="modal" data-bs-target="#avatarModal">
+                            <i class="bi bi-camera-fill me-2"></i>更换头像
+                        </button>
+                    </div>
+                    
+                    <!-- 用户名修改 -->
+                    <div class="mb-4 p-3 bg-light rounded-3">
+                        <h5 class="text-center mb-3">用户名设置</h5>
+                        <div class="d-flex justify-content-center align-items-center">
+                            <span class="me-2 fw-bold">当前用户名:</span>
+                            <span id="currentUsername">{{ user.username }}</span>
+                        </div>
+                        <div class="input-group mt-3" style="max-width: 400px; margin: 0 auto;">
+                            <input type="text" class="form-control" id="newUsername" placeholder="输入新用户名">
+                            <button class="btn btn-primary" type="button" id="changeUsernameBtn">
+                                <i class="bi bi-check-lg me-1"></i>更改
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 密码修改 -->
+                    <div class="p-3 bg-light rounded-3">
+                        <h5 class="text-center mb-3">修改密码</h5>
+                        <div class="mx-auto" style="max-width: 400px;">
+                            <div class="mb-3">
+                                <label for="currentPassword" class="form-label">当前密码</label>
+                                <input type="password" class="form-control" id="currentPassword">
+                            </div>
+                            <div class="mb-3">
+                                <label for="newPassword" class="form-label">新密码</label>
+                                <input type="password" class="form-control" id="newPassword">
+                            </div>
+                            <div class="mb-3">
+                                <label for="confirmPassword" class="form-label">确认新密码</label>
+                                <input type="password" class="form-control" id="confirmPassword">
+                            </div>
+                            <div class="d-grid">
+                                <button class="btn btn-primary" id="changePasswordBtn">
+                                    <i class="bi bi-key-fill me-1"></i>更改密码
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 头像上传模态框 -->
+<div class="modal fade" id="avatarModal" tabindex="-1" aria-labelledby="avatarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="avatarModalLabel">上传并裁剪头像</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="cropper-container">
+                            <img id="imageToCrop" class="img-fluid" style="max-height: 400px;">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>预览</h6>
+                        <div class="preview-circle mb-3">
+                            <div id="preview"></div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <input type="file" id="avatarInput" class="d-none" accept="image/*">
+                            <button class="btn btn-outline-primary" id="selectImageBtn">
+                                <i class="bi bi-folder2-open me-2"></i>选择图片
+                            </button>
+                            <button class="btn btn-primary" id="uploadBtn" disabled>
+                                <i class="bi bi-check-lg me-2"></i>确认上传
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock%}
+
+{% block scripts %}
+{{super()}}
+<style>
+    .avatar-container {
+        width: 180px;
+        height: 180px;
+        margin: 0 auto;
+        position: relative;
+    }
+    .avatar-preview {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #fff;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .cropper-container {
+        max-height: 400px;
+    }
+    .preview-circle {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin: 0 auto;
+        border: 2px solid #eee;
+    }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let cropper;
+        const imageToCrop = document.getElementById('imageToCrop');
+        const avatarInput = document.getElementById('avatarInput');
+        const selectImageBtn = document.getElementById('selectImageBtn');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const avatarModal = document.getElementById('avatarModal');
+        const avatarPreview = document.getElementById('avatarPreview');
+        
+        // 初始化模态框事件
+        const modal = new bootstrap.Modal(avatarModal);
+        
+        avatarModal.addEventListener('shown.bs.modal', function() {
+            // 重置状态
+            avatarInput.value = '';
+            uploadBtn.disabled = true;
+        });
+        
+        avatarModal.addEventListener('hidden.bs.modal', function() {
+            // 销毁 Cropper 实例
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+        });
+        
+        // 选择图片按钮点击事件
+        selectImageBtn.addEventListener('click', function() {
+            avatarInput.click();
+        });
+        
+        // 文件选择变化事件
+        avatarInput.addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (files && files.length > 0) {
+                const file = files[0];
+                
+                // 验证文件类型
+                if (!file.type.match('image.*')) {
+                    showAlert('请选择图片文件', 'warning');
+                    return;
+                }
+                
+                // 验证文件大小 (限制2MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    showAlert('图片大小不能超过2MB', 'warning');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    imageToCrop.src = event.target.result;
+                    
+                    // 初始化 Cropper.js
+                    if (cropper) {
+                        cropper.destroy();
+                    }
+                    
+                    cropper = new Cropper(imageToCrop, {
+                        aspectRatio: 1, // 1:1比例
+                        viewMode: 1,    // 限制裁剪框不超过图片
+                        autoCropArea: 1, // 初始裁剪区域大小
+                        responsive: true,
+                        preview: '.preview-circle',
+                        guides: false,
+                        center: false,
+                        highlight: false,
+                        cropBoxMovable: true,
+                        cropBoxResizable: false,
+                        toggleDragModeOnDblclick: false,
+                        ready: function() {
+                            uploadBtn.disabled = false;
+                        }
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // 上传按钮点击事件
+        uploadBtn.addEventListener('click', function() {
+            if (!cropper) {
+                showAlert('请先选择图片', 'warning');
+                return;
+            }
+            
+            // 获取裁剪后的图像数据
+            const canvas = cropper.getCroppedCanvas({
+                width: 300,
+                height: 300,
+                minWidth: 256,
+                minHeight: 256,
+                maxWidth: 1024,
+                maxHeight: 1024,
+                fillColor: '#fff',
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+            
+            if (!canvas) {
+                showAlert('裁剪失败，请重试', 'danger');
+                return;
+            }
+            
+            // 转换为Blob对象
+            canvas.toBlob(function(blob) {
+                const formData = new FormData();
+                formData.append('avatar', blob, 'avatar.png');
+                
+                // 显示加载状态
+                uploadBtn.disabled = true;
+                uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>上传中...';
+                
+                // 发送到服务器
+                fetch('/api/upload_avatar', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': getCSRFToken()
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // 更新预览头像
+                        avatarPreview.src = data.avatar_url + '?' + new Date().getTime();
+                        modal.hide();
+                        showAlert('头像上传成功', 'success');
+                    } else {
+                        showAlert(data.error || '上传失败', 'danger');
+                    }
+                })
+                .catch(error => {
+                    showAlert('网络错误，请重试', 'danger');
+                })
+                .finally(() => {
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = '<i class="bi bi-check-lg me-2"></i>确认上传';
+                });
+            }, 'image/png', 0.9); // 90%质量
+        });
+        
+        // 辅助函数
+        function showAlert(message, type) {
+            // 同之前的实现
+        }
+        
+        function getCSRFToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.content || '';
+        }
+    });
+</script>
+{% endblock%}

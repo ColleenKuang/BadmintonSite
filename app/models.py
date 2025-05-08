@@ -43,7 +43,7 @@ class Users(UserMixin, db.Model):
     
     # played_games = db.relationship("PlayGames", backref=db.backref('player', lazy=True))
     def __repr__(self):
-        return "<User {} {} {}>".format(self.username,self.gender,self.avatar)
+        return "<User id-{} name:{} gender:{} avatar:{}>".format(self.id, self.username, self.gender, self.avatar)
     
 # 1. 用户对象加载
 # 当用户登录后，Flask-Login 会在会话（Session）中存储用户的唯一标识符（如 user_id）。

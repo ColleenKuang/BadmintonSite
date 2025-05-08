@@ -8,7 +8,7 @@ from flask_login import login_user, login_required, current_user, logout_user
 from werkzeug.utils import secure_filename
 import os,json
 from app.games import double_mode_1, double_mode_2, double_mode_3
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError,IntegrityError
 from sqlalchemy import and_, desc
 from datetime import datetime, timezone
 import pytz 
@@ -28,41 +28,52 @@ def hello_world():
     return render_template('index.html',gps=list(gps),bos=list(bos))
 
 @app.route('/register', methods=['GET','POST'])
-def register():
+def register():        
     form = RegisterForm()
     if form.validate_on_submit():
-        re = form.validate_register()
-        if len(re) > 0:
-            flash(re, category="danger")
-        else:
-            username = form.username.data
-            password = form.password.data
-            password = bcrypt.generate_password_hash(password)
-            gender = Gender.MALE if form.gender.data == "1" else Gender.FEMALE
-            user = Users(username=username,password=password,gender=gender)
+        validation_errors = form.validate_register()
+        if validation_errors:
+            flash(validation_errors, category="danger")
+            return redirect(url_for("register"))
+        
+        try:
+            # Create user
+            user = Users(
+                username=form.username.data,
+                password=bcrypt.generate_password_hash(form.password.data),
+                gender=Gender.MALE if form.gender.data == "1" else Gender.FEMALE
+            )
             
-            file = request.files['avatar']
-            # 验证文件类型
-            if file and Config.allowed_pic_file(file.filename):
-                # 生成唯一文件名
-                filename = Config.unique_filename(file.filename)
-                
-                # 确保上传目录存在
-                os.makedirs(os.path.join(Config.UPLOAD_FOLDER,'avatar'), exist_ok=True)
-                
-                # 保存文件
-                file_path = os.path.join(Config.UPLOAD_FOLDER, 'avatar' , filename)
-                file.save(file_path)
-
-                # 更新记录
+            db.session.add(user)
+            db.session.flush()  # Get user ID without commit
+            
+            # Handle avatar
+            file = request.files.get('avatar')
+            if file and file.filename:
+                if not Config.allowed_pic_file(file.filename):
+                    flash("Invalid file type", "danger")
+                    return redirect(url_for("register"))
+                    
+                if file.content_length > Config.MAX_CONTENT_LENGTH:
+                    flash("File too large", "danger")
+                    return redirect(url_for("register"))
+                    
+                filename = secure_filename(Config.unique_filename(file.filename))
+                os.makedirs(Config.AVATAR_FOLDER, exist_ok=True)
+                file.save(os.path.join(Config.AVATAR_FOLDER, filename))
                 user.avatar = filename
-                
-                db.session.add(user) # db.session.add() 调用是将改动添加进数据库会话（一个临时区域）中
-                db.session.commit()
-
             
-            flash("Congrat!!", category="success")
+            db.session.commit()
+            flash("Registration successful!", "success")
             return redirect(url_for("login"))
+            
+        except IntegrityError:
+            db.session.rollback()
+            flash("Username already exists", "danger")
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.exception("Registration failed")
+            flash("Registration failed, please try again", "danger")
         
     return render_template("register.html",form = form)
 
@@ -231,10 +242,6 @@ def update_member():
         # Step 1. 预先检查
         game = Games.query.filter_by(id=session['game_id']).first()
         client_updated_at = datetime.fromisoformat(data['client_updated_at'])
-        # TODO 
-        print("updated_at checking: ")
-        print(client_updated_at)
-        print(game.updated_at)
         if (client_updated_at != game.updated_at):
             return jsonify({"status": "success","msg":"数据已被其他用户修改,请刷新页面"}), 200
         
@@ -866,6 +873,12 @@ def gamelist():
         session.pop('game_config', None)
     return render_template("gamelist.html",games=games)
 
+@app.route("/personal_info")
+@login_required
+def personal_info():
+    print(current_user)
+    return render_template("personal_info.html",user = current_user)
+
 @app.route('/history')
 @login_required
 # TODO history func
@@ -961,6 +974,44 @@ def save_game_rule():
         print(str(e))
         return jsonify({'status': 'error', 'msg': str(e)}), 400
 
+@app.route('/api/change_username', methods=['POST'])
+@login_required
+def change_username():
+    new_username = request.json.get('username')
+    # 验证逻辑...
+    current_user.username = new_username
+    db.session.commit()
+    return jsonify({'status': 'success'})
+
+@app.route('/api/change_password', methods=['POST'])
+@login_required
+def change_password():
+    current_password = request.json.get('current_password')
+    new_password = request.json.get('new_password')
+    # 验证逻辑...
+    current_user.set_password(new_password)
+    db.session.commit()
+    return jsonify({'status': 'success'})
+
+@app.route('/api/upload_avatar', methods=['POST'])
+@login_required
+def upload_avatar():
+    if 'avatar' not in request.files:
+        return jsonify({'error': '未选择文件'}), 400
+    
+    file = request.files['avatar']
+    # 文件验证和保存逻辑...
+    filename = secure_filename(f"user_{current_user.id}.{file.filename.split('.')[-1]}")
+    file.save(os.path.join(app.config['UPLOAD_FOLDER'], 'avatars', filename))
+    
+    # current_user.avatar = filename
+    # db.session.commit()
+    
+    return jsonify({
+        'status': 'success',
+        'avatar_url': url_for('static', filename=f'uploads/avatars/{filename}')
+    })
+
 @app.route('/debug-session')
 def debug_session():
     return render_template("debug_session.html",session = session)
@@ -969,4 +1020,5 @@ def debug_session():
 def database_check():
     gs = Games.query.all()
     pgs = PlayGames.query.all()
-    return render_template("database-check.html", playgames = list(pgs), games = list(gs))
+    users = Users.query.all()
+    return render_template("database-check.html", playgames = list(pgs), games = list(gs),users=list(users))
