@@ -31,7 +31,7 @@
               </li>
               {% else %}
               <li class="nav-item align-self-center">
-                <a class="nav-link align-self-center align-middle" href="#">
+                <a class="nav-link align-self-center align-middle" href="{{url_for('personal_info')}}">
                   <img src="{{ url_for('static', filename='uploads/avatars/' + current_user.avatar) }}" 
                   width="35" height="35" 
                   class="avatar rounded-circle "

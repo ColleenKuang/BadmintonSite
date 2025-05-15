@@ -10,8 +10,6 @@ def double_mode_1(member_list, matches_per_player, max_consecutive_games=2, min_
     :param min_rest_games: 最小休息场次（默认1场）
     :return: 对战表列表 [(team1, team2), ...] 或错误消息
     """
-    
-    
     # 1. 数据准备
     active_players = [i for i, m in enumerate(member_list) if m != ""]
     total_players = (len(member_list))
@@ -256,8 +254,8 @@ def double_mode_3(member_list, matches_per_player, max_consecutive_games=2, min_
     active_players = [i for i, m in enumerate(member_list) if m != ""]
     total_players = len(active_players)
     
-    if total_players % 2 != 0:
-        return "成员数量必须是偶数"
+    # if total_players % 2 != 0:
+    #     return "成员数量必须是偶数"
     
     # 2. 分组
     group_a = [active_players[i] for i in range(0, len(active_players), 2)]
@@ -339,3 +337,6 @@ def double_mode_3(member_list, matches_per_player, max_consecutive_games=2, min_
                 player_stats[player]['rest'] += 1
     
     return schedule
+
+def double_mode_8():
+    pass

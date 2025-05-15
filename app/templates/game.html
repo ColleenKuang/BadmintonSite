@@ -202,20 +202,37 @@
         });
     }
 
-    async function showMsgModal(message) {
+    async function showMsgModal(message, redirectUrl = null) {
+        // 显示消息
         document.getElementById('modalMessage').textContent = message;
-        msgModal.show();
-      
-        // 可选：3秒后自动关闭
-        setTimeout(() => {
-            msgModal.hide();
-            //location.reload(true);
-        }, 3000);
+        const modal = new bootstrap.Modal(document.getElementById('messageModal'));
+        modal.show();
+        
+        // 创建Promise以便await等待
+        return new Promise((resolve) => {
+            // 自动关闭定时器
+            let autoCloseTimer = setTimeout(() => {
+                modal.hide();
+            }, 3000);
 
-        // 确保模态框完全关闭后再刷新
-        document.getElementById('messageModal').addEventListener('hidden.bs.modal', function() {
-            location.reload(true); // 强制从服务器重新加载
-        }, { once: true });
+            // 模态框关闭后的处理
+            const handleHide = () => {
+                clearTimeout(autoCloseTimer); // 清除自动关闭定时器
+                document.getElementById('messageModal')
+                    .removeEventListener('hidden.bs.modal', handleHide);
+                
+                if (redirectUrl) {
+                    window.location.href = redirectUrl; // 跳转到指定URL
+                } else {
+                    location.reload(true); // 默认刷新页面
+                }
+                resolve();
+            };
+
+            // 监听模态框关闭事件
+            document.getElementById('messageModal')
+                .addEventListener('hidden.bs.modal', handleHide, { once: true });
+        });
     }
     
     async function saveTitle(content){

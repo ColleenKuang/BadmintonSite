@@ -732,6 +732,7 @@ def single_matches_reloading(matches, game_config):
     pass
 
 @app.route("/game")
+@login_required
 def game():
     print("game_id: ",session['game_id'])
     game = Games.query.filter_by(id=session['game_id']).first()
@@ -977,21 +978,47 @@ def save_game_rule():
 @app.route('/api/change_username', methods=['POST'])
 @login_required
 def change_username():
-    new_username = request.json.get('username')
-    # 验证逻辑...
-    current_user.username = new_username
-    db.session.commit()
-    return jsonify({'status': 'success'})
+    try:
+        new_username = request.json.get('username')
+        # 
+        if new_username is None:
+            return jsonify({'status': 'error'}), 400
+        
+        # 检查用户名是否已存在（伪代码）
+        if Users.query.filter_by(username=new_username).first():
+            return jsonify({"status": 'success', "msg": "用户名已存在"}), 400
+        
+        current_user.username = new_username
+        print(new_username)
+        db.session.commit()
+        return jsonify({'status': 'success'}), 200
+    except Exception as e:
+        return jsonify({"status": 'error', "msg": str(e)}), 400
 
 @app.route('/api/change_password', methods=['POST'])
 @login_required
 def change_password():
-    current_password = request.json.get('current_password')
-    new_password = request.json.get('new_password')
-    # 验证逻辑...
-    current_user.set_password(new_password)
-    db.session.commit()
-    return jsonify({'status': 'success'})
+    try:
+        # 验证 CSRF
+        # validate_csrf(request.headers.get('X-CSRF-Token'))
+        
+        data = request.get_json()
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+
+        # 验证当前密码是否正确
+        if not bcrypt.check_password_hash(current_user.password, current_password):
+            print("当前密码不正确")
+            return jsonify({"success": False, "message": "当前密码不正确"}), 401
+        
+        # 更新密码（伪代码）
+        current_user.password = bcrypt.generate_password_hash(new_password)
+        db.session.commit()
+        
+        return jsonify({"success": True, "message": "密码修改成功"})
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route('/api/upload_avatar', methods=['POST'])
 @login_required
@@ -1004,8 +1031,8 @@ def upload_avatar():
     filename = secure_filename(f"user_{current_user.id}.{file.filename.split('.')[-1]}")
     file.save(os.path.join(app.config['UPLOAD_FOLDER'], 'avatars', filename))
     
-    # current_user.avatar = filename
-    # db.session.commit()
+    current_user.avatar = filename
+    db.session.commit()
     
     return jsonify({
         'status': 'success',

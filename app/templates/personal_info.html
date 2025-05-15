@@ -10,56 +10,51 @@
         <div class="col-md-8 col-lg-6">
             <div class="card shadow">
                 <div class="card-body p-4">
-                    <!-- 头像展示区域 -->
-                    <div class="text-center mb-4">
-                        <div class="avatar-container">
+                    <!-- avatar edit -->
+                    <div class="text-center mb-1">
+                        <div class="avatar-container position-relative d-inline-block">
                             <img id="avatarPreview" 
-                                 src="{{ url_for('static', filename='uploads/avatars/' + user.avatar) }}" 
-                                 class="avatar-preview"
-                                 alt="用户头像">
+                                src="{{ url_for('static', filename='uploads/avatars/' + user.avatar) }}" 
+                                class="avatar-preview"
+                                alt="用户头像">
+                            <div class="avatar-icon-wrapper" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#avatarModal"
+                                role="button"
+                                aria-label="更换头像">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    width="20" height="20" fill="currentColor"
+                                    class="bi bi-camera"
+                                    viewBox="0 0 16 16">
+                                    <path d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 6.827 3h2.344a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 12.828 5H14a1 1 0 0 1 1 1z"/>
+                                    <path d="M8 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5m0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M3 6.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0"/>
+                                </svg>
+                            </div>
                         </div>
-                        <button class="btn btn-outline-primary mt-3" data-bs-toggle="modal" data-bs-target="#avatarModal">
-                            <i class="bi bi-camera-fill me-2"></i>更换头像
+                    </div>
+                    <!-- username edit -->
+                    <div class="d-flex gap-1 align-items-end justify-content-center"> 
+                        <h1 class="ms-4 mb-0 align-self-center" id="currentUsername">{{ user.username }}</h1> 
+                        <svg xmlns="http://www.w3.org/2000/svg" 
+                            width="12" height="12" 
+                            fill="currentColor" 
+                            class="bi bi-pencil-square mb-1" 
+                            viewBox="0 0 16 16"
+                            role="button"
+                            data-bs-toggle="modal"
+                            data-bs-target="#usernameModal"> 
+                            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                            <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
+                        </svg>
+                    </div>
+                    <!-- edit Pwd -->
+                    <div class="d-flex gap-1 align-items-end justify-content-center mt-4">
+                        <button type="button" 
+                                class="btn btn-outline-purple" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#editPwdModal">
+                            <i class="bi bi-key-fill"></i>修改密码
                         </button>
-                    </div>
-                    
-                    <!-- 用户名修改 -->
-                    <div class="mb-4 p-3 bg-light rounded-3">
-                        <h5 class="text-center mb-3">用户名设置</h5>
-                        <div class="d-flex justify-content-center align-items-center">
-                            <span class="me-2 fw-bold">当前用户名:</span>
-                            <span id="currentUsername">{{ user.username }}</span>
-                        </div>
-                        <div class="input-group mt-3" style="max-width: 400px; margin: 0 auto;">
-                            <input type="text" class="form-control" id="newUsername" placeholder="输入新用户名">
-                            <button class="btn btn-primary" type="button" id="changeUsernameBtn">
-                                <i class="bi bi-check-lg me-1"></i>更改
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- 密码修改 -->
-                    <div class="p-3 bg-light rounded-3">
-                        <h5 class="text-center mb-3">修改密码</h5>
-                        <div class="mx-auto" style="max-width: 400px;">
-                            <div class="mb-3">
-                                <label for="currentPassword" class="form-label">当前密码</label>
-                                <input type="password" class="form-control" id="currentPassword">
-                            </div>
-                            <div class="mb-3">
-                                <label for="newPassword" class="form-label">新密码</label>
-                                <input type="password" class="form-control" id="newPassword">
-                            </div>
-                            <div class="mb-3">
-                                <label for="confirmPassword" class="form-label">确认新密码</label>
-                                <input type="password" class="form-control" id="confirmPassword">
-                            </div>
-                            <div class="d-grid">
-                                <button class="btn btn-primary" id="changePasswordBtn">
-                                    <i class="bi bi-key-fill me-1"></i>更改密码
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -69,7 +64,7 @@
 
 <!-- 头像上传模态框 -->
 <div class="modal fade" id="avatarModal" tabindex="-1" aria-labelledby="avatarModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="avatarModalLabel">上传并裁剪头像</h5>
@@ -89,11 +84,11 @@
                         </div>
                         <div class="d-grid gap-2">
                             <input type="file" id="avatarInput" class="d-none" accept="image/*">
-                            <button class="btn btn-outline-primary" id="selectImageBtn">
-                                <i class="bi bi-folder2-open me-2"></i>选择图片
+                            <button class="btn btn-outline-purple" id="selectImageBtn">
+                                <i class="bi bi-folder2-open"></i>选择图片
                             </button>
-                            <button class="btn btn-primary" id="uploadBtn" disabled>
-                                <i class="bi bi-check-lg me-2"></i>确认上传
+                            <button class="btn confirmBtn" id="uploadBtn" disabled>
+                                <i class="bi bi-check-lg"></i>确认上传
                             </button>
                         </div>
                     </div>
@@ -103,20 +98,121 @@
     </div>
 </div>
 
+<!-- editPwdModal -->
+<div class="modal fade" id="editPwdModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalTitle">修改密码</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="passwordForm">
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label">当前密码</label>
+                        <input type="password" class="form-control" id="currentPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">新密码</label>
+                        <input type="password" class="form-control" id="newPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">确认新密码</label>
+                        <input type="password" class="form-control" id="confirmPassword" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="submit" class="btn confirmBtn" form="passwordForm" id="changePasswordBtn">
+                    <i class="bi bi-key-fill"></i>确认更改
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 用户名修改模态框 -->
+<div class="modal fade" id="usernameModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">修改用户名</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+      </div>
+      <div class="modal-body">
+        <form id="usernameForm">
+          <div class="mb-3">
+            <label for="newUsername" class="form-label">新用户名</label>
+            <input type="text" 
+                class="form-control" 
+                id="newUsername" 
+                required
+                minlength="3" 
+                maxlength="20"
+                pattern="[a-zA-Z0-9_\u4e00-\u9fa5]+" 
+                title="可包含中文、字母、数字和下划线（3-20个字符）">
+            <div class="form-text">可包含中文、字母、数字和下划线（3-20个字符）</div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="submit" class="btn confirmBtn" form="usernameForm" id="changeUsernameBtn">
+          <i class="bi bi-check-lg"></i>确认修改
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- msgModal -->
+<div id="messageModal" class="modal fade" >
+    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+        <div class="modal-header">
+        <h5 class="modal-title">系统提示</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+        <p id="modalMessage"></p>
+        </div>
+        <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+        </div>
+    </div>
+    </div>
+</div>
+
 {% endblock%}
 
 {% block scripts %}
 {{super()}}
 <style>
     .avatar-container {
-        width: 180px;
-        height: 180px;
-        margin: 0 auto;
         position: relative;
+        display: inline-block;
     }
+
+    .avatar-icon-wrapper {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        background-color: white;
+        border-radius: 50%;
+        padding: 6px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 0 4px rgba(0,0,0,0.5);
+        cursor: pointer;
+        width: 36px;
+        height: 36px;
+    }
+
     .avatar-preview {
-        width: 100%;
-        height: 100%;
+        width: 200px;
+        height: 200px;
         border-radius: 50%;
         object-fit: cover;
         border: 4px solid #fff;
@@ -133,9 +229,33 @@
         margin: 0 auto;
         border: 2px solid #eee;
     }
+
+    .confirmBtn{
+      background-color: #512DA8 !important;
+      color: white !important;
+      border: none; 
+    }
+
+    /* 紫色 outline 按钮示例 */
+    .btn-outline-purple {
+    --bs-btn-color: #6f42c1;
+    --bs-btn-border-color: #6f42c1;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #6f42c1;
+    --bs-btn-hover-border-color: #6f42c1;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #5a32a8;
+    --bs-btn-active-border-color: #52309c;
+    --bs-btn-disabled-color: #6f42c1;
+    --bs-btn-disabled-border-color: #6f42c1;
+    }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 <script>
+    const msgModal = new bootstrap.Modal(document.getElementById('messageModal'));
+    const pwdModal = new bootstrap.Modal(document.getElementById('editPwdModal'));
+    const usernameModal = new bootstrap.Modal(document.getElementById('usernameModal'));
+
     document.addEventListener('DOMContentLoaded', function() {
         let cropper;
         const imageToCrop = document.getElementById('imageToCrop');
@@ -261,7 +381,7 @@
                 .then(data => {
                     if (data.status === 'success') {
                         // 更新预览头像
-                        avatarPreview.src = data.avatar_url + '?' + new Date().getTime();
+                        avatarPreview.src = data.avatar_url;
                         modal.hide();
                         showAlert('头像上传成功', 'success');
                     } else {
@@ -287,5 +407,155 @@
             return document.querySelector('meta[name="csrf-token"]')?.content || '';
         }
     });
+
+    document.getElementById('usernameForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const btn = document.getElementById('changeUsernameBtn');
+        const originalText = btn.innerHTML;
+        const newUsername = document.getElementById('newUsername').value.trim();
+        
+        try {
+            // 按钮加载状态
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>处理中...';
+            
+            // 发送请求到后端
+            const response = await fetch('/api/change_username', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': getCSRFToken() // Flask CSRF保护
+                },
+                body: JSON.stringify({ username: newUsername })
+            });
+            
+            const data = await response.json();
+            usernameModal.hide();
+            this.reset(); // 重置表单
+            if(data.msg){
+                await showMsgModal(data.msg);
+            }else{
+                await showMsgModal('用户名修改成功！');
+                document.getElementById('currentUsernameDisplay').value = newUsername;
+            }
+
+            // 更新页面其他位置的用户名显示（如果有）
+            document.querySelectorAll('.username-display').forEach(el => {
+                el.textContent = newUsername;
+            });
+            
+        } catch (error) {
+            showMsgModal(error.message || '修改失败，请重试', 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    });
+
+    document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const btn = document.getElementById('changePasswordBtn');
+        const originalText = btn.innerHTML;
+
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        
+        // 前端验证
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            pwdModal.hide();
+            showMsgModal('所有字段都必须填写');
+            return;
+        }
+        
+        if (newPassword !== confirmPassword) {
+            pwdModal.hide();
+            showMsgModal('新密码与确认密码不匹配');
+            return;
+        }
+        
+        try {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>处理中...';
+            
+            // 获取表单数据
+            const formData = {
+                current_password: currentPassword,
+                new_password: newPassword,
+                confirm_password: confirmPassword
+            };
+            
+            // 发送请求（示例）
+            const response = await fetch('/api/change_password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': getCSRFToken() // Flask CSRF 保护
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) throw new Error(data.message || '修改失败');
+            
+            // 成功处理
+            pwdModal.hide();
+            this.reset(); // 重置表单
+            if(data.msg){
+                await showMsgModal(data.msg);
+            }else{
+                await showMsgModal('密码修改成功！3秒后请重新登录','/logout');
+            }
+            
+            
+        } catch (error) {
+            pwdModal.hide();
+            console.log(error.message || '修改失败，请重试', 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    });
+
+    async function showMsgModal(message, redirectUrl = null) {
+        // 显示消息
+        document.getElementById('modalMessage').textContent = message;
+        const modal = new bootstrap.Modal(document.getElementById('messageModal'));
+        modal.show();
+        
+        // 创建Promise以便await等待
+        return new Promise((resolve) => {
+            // 自动关闭定时器
+            let autoCloseTimer = setTimeout(() => {
+                modal.hide();
+            }, 3000);
+
+            // 模态框关闭后的处理
+            const handleHide = () => {
+                clearTimeout(autoCloseTimer); // 清除自动关闭定时器
+                document.getElementById('messageModal')
+                    .removeEventListener('hidden.bs.modal', handleHide);
+                
+                if (redirectUrl) {
+                    window.location.href = redirectUrl; // 跳转到指定URL
+                } else {
+                    location.reload(true); // 默认刷新页面
+                }
+                resolve();
+            };
+
+            // 监听模态框关闭事件
+            document.getElementById('messageModal')
+                .addEventListener('hidden.bs.modal', handleHide, { once: true });
+        });
+    }
+
+    function getCSRFToken() {
+        const metaTag = document.querySelector('meta[name="csrf-token"]');
+        return metaTag ? metaTag.content : '';
+    }
 </script>
 {% endblock%}
