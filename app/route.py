@@ -884,20 +884,17 @@ def personal_info():
 @login_required
 # TODO history func
 def history():
-    # 获取数据
-    scores_df = get_game_scores(user_id=current_user.id, game_id="2")
-    # scores_df = get_game_scores(user_id="4")
-    
-    # 转换为 Plotly 需要的格式
-    graph_data = [{
-        'x': scores_df['matches_indices'].tolist(),
-        'y': scores_df['score'].tolist(),
-        'type': 'line',
-        'mode': 'lines+markers',
-        'name': '分数趋势'
-    }]
-    
-    return render_template("history.html", graph_data=json.dumps(graph_data))
+    latest_results = (
+    db.session.query(PlayGames.result)
+        .filter(PlayGames.player_id == current_user.id)
+        .order_by(PlayGames.match_idx.desc())
+        .limit(10)
+        .all()
+    )
+
+    # 提取结果为列表
+    Top10Matches = [1 if r.result.value == "win" else 0 for r in latest_results]
+    return render_template("history.html", Top10Matches=Top10Matches)
 
 @app.route('/test')
 def test():

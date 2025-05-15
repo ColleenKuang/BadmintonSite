@@ -1,58 +1,112 @@
 {% extends "base.html" %}
 {% block app_content %}
-<!--
+<div id="Top10Card" class="card shadow-sm mt-2">
+    <div class="card-body p-3">
+      <div class="row d-flex align-items-center">
+        <div class="col-6">
+            <canvas id="WinPCTChart"></canvas>
+        </div>   
+        <div class="col-6"> 
+            <h2 style="color:white;">最近10场胜负</h2>
+            <div class="mt-1 row">
+                {% for match in Top10Matches %}
+                    <div class="col-2 col-sm-2 col-md-2 col-lg-2 mb-2"> 
+                    {% if match == 1 %}
+                        <div class="matchblock p-2 winblock text-center">
+                            <p class="mb-0 fw-bold">胜</p>
+                        </div>
+                    {% else %}
+                        <div class="matchblock p-2 lossblock text-center">
+                            <p class="mb-0 fw-bold">负</p>
+                        </div>
+                    {% endif %}
+                    </div>
+                    
+                    {# 每5个后插入clearfix（确保换行） #}
+                    {% if loop.index % 5 == 0 %}
+                    <div class="w-100"></div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+      </div>
+    </div>
+</div>
+
 <div id="scoreChart"></div>
--->
 
 
 {% endblock %}
-
 {% block scripts %}
 {{ super() }}  <!-- 保留父模板的bootstrap等JS -->
-<script src="{{ url_for('static', filename='js/plotly-3.0.1.js') }}"></script>
+
+<style>
+    #Top10Card{
+        border-radius: 12px;
+        background-color: #A4A8AC;
+    }
+
+    .matchblock{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width:30px;
+        height:30px;
+        border-radius: 8px;
+        margin: 1px;
+        color: white;
+    }
+
+    .winblock{
+        background-color: #27AE60;
+    }
+
+    .lossblock{
+        background-color: #B73629;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// 页面加载完成后渲染图表
-document.addEventListener('DOMContentLoaded', function() {
-    const graphData = {{ graph_data | safe }};
-    const layout = {
-        xaxis: { 
-            title: '时间',
-            // 显式禁用轴交互
-            fixedrange: true  // ← 新增关键配置
+    const top10Matches = {{ Top10Matches | tojson | safe }};
+    console.log(top10Matches); 
+    const winpct_ctx = document.getElementById('WinPCTChart').getContext('2d');
+    const win_cnt = top10Matches.filter(x => x === 1).length;
+    const loss_cnt = 10 - win_cnt;
+    const winRate = (win_cnt / 10 * 100).toFixed(2);
+    const winpctChart = new Chart(winpct_ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['胜', '负'],
+            datasets: [{
+                data: [win_cnt, loss_cnt],
+                backgroundColor: ['#27AE60', '#B73629'],
+            }]
         },
-        yaxis: { 
-            title: '分数',
-            fixedrange: true  // ← 新增关键配置
-        },
-        showlegend: false,
-        // 确保布局不覆盖配置
-        dragmode: false  // ← 防止布局参数覆盖
-    };
+        options: {
+            cutout: '50%', // ✔️ 必须设置中心孔洞
+            plugins: {
+            legend: { display: false }, // 可选隐藏图例
+            },
+            // ✔️ 关键：添加动画回调
+            animation: {
+            onComplete: function() {
+                const { ctx, chartArea } = this;
+                if (!chartArea) return; // 防止未渲染完成时报错
+                
+                ctx.save();
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = 'bold 20px Arial';
+                ctx.fillText(`${winRate}%`, chartArea.width / 2 + chartArea.left, chartArea.height / 2 + chartArea.top - 5);
+                ctx.font = '14px Arial';
+                ctx.fillText('胜率', chartArea.width / 2 + chartArea.left, chartArea.height / 2 + chartArea.top + 15);
+                ctx.restore();
+            }
+            }
+        }
+    });
 
-    const config = {
-        staticPlot: true,
-        scrollZoom: false,
-        dragMode: false,
-        modeBarButtonsToRemove: [
-            'toImage', 'zoom2d', 'pan2d', 'select2d', 'lasso2d',  // 完整移除工具栏
-            'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d'
-        ]
-    };
-
-    // 验证配置是否传递正确
-    console.log('使用的Plotly版本:', Plotly.version);
-    console.log('生效配置:', config);
-
-    // 正确传参方式
-    Plotly.newPlot(
-        'scoreChart', 
-        graphData,  // 数据数组
-        layout,       // 布局对象
-        config        // 配置对象（必须作为第4参数）
-    );
-
-    // 添加CSS加固
-    document.getElementById('scoreChart').style.pointerEvents = 'none';
-});
+    
 </script>
 {% endblock %}

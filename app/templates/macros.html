@@ -67,7 +67,7 @@
         </button>
       </div>
       <div class="d-flex justify-content-center">
-        <h1 class="display-1 score-display fw_bold"> {{match.score[0]}} : {{match.score[1]}} </h1>
+        <h1 class="display-1 score-display"> {{match.score[0]}} : {{match.score[1]}} </h1>
       </div>
       <div class="d-flex justify-content-center mb-1">
         <p class="text-muted mb-0 abs-score-display">净胜 {{ match.score[0] - match.score[1] | abs }}</p>
@@ -915,6 +915,17 @@ document.getElementById('removeGame').addEventListener('click', async (e) => {
   {{render_score_card(loop.index,game)}}
 </div>
 {% endfor %}
+<div id="addCustomMatch" class="card score-card shadow-sm mt-3">
+  <div class="card-body p-2">
+    <div class="d-flex justify-content-center align-items-center" style="height: 40px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor"
+        class="bi bi-plus" viewBox="0 0 16 16">
+        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
 {% endif %}
 <!-- footer -->
 <footer class="fixed-bottom bg-light">
@@ -960,6 +971,11 @@ document.getElementById('removeGame').addEventListener('click', async (e) => {
   </footer>
 <!-- footer end -->
 
+<style>
+   #addCustomMatch{
+    border: 2px dashed #6f42c1;  /* 紫色虚线 */
+   }
+</style>
 <script>
 document.addEventListener('DOMContentLoaded',function(){
   // 为所有编辑按钮绑定点击事件
@@ -1012,11 +1028,14 @@ document.addEventListener('DOMContentLoaded',function(){
   })
 
 });
+
+document.getElementById('addCustomMatch').addEventListener('click', async function saveGameResult(){
+  console.log("addCustomMatch");
+})
 </script>
 {% endmacro %}
 
 {%macro game_rank(game_config)%}
-
 {%if game_config.games|length == 0 %}
 <div class="w-100 d-flex justify-content-center align-items-center" 
      style="height:70vh; background-color:white; color:rgb(196, 176, 233);">
@@ -1130,6 +1149,8 @@ document.addEventListener('DOMContentLoaded',function(){
   .rounded-table td:last-child {
       border-radius: 0 12px 12px 0;
   }
+
+
 </style>
 
 <script>
