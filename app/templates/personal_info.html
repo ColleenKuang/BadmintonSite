@@ -370,7 +370,7 @@
                 uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>上传中...';
                 
                 // 发送到服务器
-                fetch('/api/upload_avatar', {
+                fetch('/api/change_avatar', {
                     method: 'POST',
                     body: formData,
                     headers: {
@@ -433,6 +433,7 @@
             const data = await response.json();
             usernameModal.hide();
             this.reset(); // 重置表单
+            console.log(data);
             if(data.msg){
                 await showMsgModal(data.msg);
             }else{
@@ -497,10 +498,7 @@
                 body: JSON.stringify(formData)
             });
             
-            const data = await response.json();
-            
-            if (!response.ok) throw new Error(data.message || '修改失败');
-            
+            const data = await response.json();            
             // 成功处理
             pwdModal.hide();
             this.reset(); // 重置表单

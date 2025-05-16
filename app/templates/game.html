@@ -253,7 +253,8 @@
                 if(data.msg){
                     showMsgModal(data.msg);
                 }else{
-                    window.location.href = `/game`;
+                    const gameId = {{ game_id | tojson | safe }};
+                    window.location.href = `/game/${gameId}`;
                 }
             }
         })
@@ -277,7 +278,8 @@
                 if(data.msg){
                     showMsgModal(data.msg);
                 }else{
-                    window.location.href = `/game`;
+                    const gameId = {{ game_id | tojson | safe }};
+                    window.location.href = `/game/${gameId}`;
                 }
             }
         })
@@ -345,7 +347,8 @@
                 if(data.msg){
                     showMsgModal(data.msg);
                 }else{
-                    window.location.href = `/game`;
+                    const gameId = {{ game_id | tojson | safe }};
+                    window.location.href = `/game/${gameId}`;
                 }
             }
         })
@@ -430,7 +433,8 @@
                         if(data.msg){
                             await showMsgModal(data.msg);
                         }else{
-                            window.location.href = `/game`;
+                            const gameId = {{ game_id | tojson | safe }};
+                            window.location.href = `/game/${gameId}`;
                         }
                     }
         
@@ -470,7 +474,8 @@
                     if(data.msg){
                         await showMsgModal(data.msg);
                     }else{
-                        window.location.href = `/game`;
+                        const gameId = {{ game_id | tojson | safe }};
+                        window.location.href = `/game/${gameId}`;
                     }
                 } catch (error) {
                     if (error.message !== 'Modal closed without input') {

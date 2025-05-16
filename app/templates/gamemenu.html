@@ -127,13 +127,11 @@
                     });
             
                     const data = await response.json();
-            
-                    if (!response.ok) {
-                        throw new Error(data.message || '创建比赛失败');
+                    // 跳转到新创建的游戏页面
+                    if(data.status=="success"){
+                        window.location.href = `/game/${data.game_id}`;
                     }
                     
-                    // 跳转到新创建的游戏页面
-                    window.location.href = '/game';
                   
                 } catch (error) {
                     console.error('Error:', error);

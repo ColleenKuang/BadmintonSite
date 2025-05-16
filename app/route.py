@@ -182,7 +182,7 @@ def create_game():
     # 验证请求数据
     data = request.get_json()
     if not data or 'game_type' not in data or 'title' not in data:
-        return jsonify({"success": False, "message": "无效的请求参数"}), 400
+        return jsonify({"status": "error", "msg": "无效的请求参数"}), 400
 
     # 创建新游戏记录
     try:
@@ -198,16 +198,16 @@ def create_game():
         session['game_id'] = new_game.id
         session["game_active_tab_idx"] = 1
         return jsonify({
-            "success": True,
+            "status": "success",
             "game_id": new_game.id,
-            "message": "比赛创建成功"
+            "msg": "比赛创建成功"
         }), 201
 
     except Exception as e:
         db.session.rollback()
         return jsonify({
-            "success": False,
-            "message": f"数据库错误: {str(e)}"
+            "status": "error",
+            "msg": f"数据库错误: {str(e)}"
         }), 500
 
 @app.route('/api/remove_game', methods=['POST'])
@@ -412,7 +412,7 @@ def record_single_schedule(schedule):
     pass
 
 @app.route('/api/generate_matches', methods=['POST'])
-def generate_games():
+def generate_matches():
     # ---------- 数据验证 ----------
     # 1. 检查当前game的状态
     if session["game_config"]["gamestatus"] == GameStatus.DONE.value:
@@ -616,7 +616,7 @@ def save_ranking():
         if 'game_id' not in session:
             return jsonify({
                 "status": "error",
-                "message": "Missing game session",
+                "msg": "Missing game session",
                 "code": "GAME_SESSION_EXPIRED"
             }), 400
 
@@ -628,7 +628,7 @@ def save_ranking():
         if not isinstance(ranking_data, list) or len(ranking_data) == 0:
             return jsonify({
                 "status": "error",
-                "message": "Invalid ranking data format",
+                "msg": "Invalid ranking data format",
                 "code": "INVALID_RANKING_DATA"
             }), 400
 
@@ -678,7 +678,7 @@ def save_ranking():
         db.session.rollback()
         return jsonify({
             "status": "error",
-            "message": f"Missing required field: {str(e)}",
+            "msg": f"Missing required field: {str(e)}",
             "code": "MISSING_FIELD"
         }), 400
 
@@ -686,7 +686,7 @@ def save_ranking():
         db.session.rollback()
         return jsonify({
             "status": "error",
-            "message": str(e),
+            "msg": str(e),
             "code": "INVALID_VALUE"
         }), 400
 
@@ -694,7 +694,7 @@ def save_ranking():
         db.session.rollback()
         return jsonify({
             "status": "error",
-            "message": "Internal server error",
+            "msg": "Internal server error",
             "code": "INTERNAL_ERROR",
             "debug": str(e)  # 生产环境应移除 debug 信息
         }), 500
@@ -731,13 +731,16 @@ def double_matches_reloading(matches, game_config):
 def single_matches_reloading(matches, game_config):
     pass
 
-@app.route("/game")
+@app.route("/game/<int:game_id>")
 @login_required
-def game():
-    print("game_id: ",session['game_id'])
+def game(game_id):
+    print("game_id: ",game_id)
+    session['game_id'] = game_id
     game = Games.query.filter_by(id=session['game_id']).first()
+    if not game:
+        abort(404, description="Game not found")
+    
     admin = db.session.query(Users.username,Users.avatar,Users.id).filter(Users.id==game.creator_id).first()
-    # 按 match_idx
     matches = PlayGames.query.filter(PlayGames.game_id==session['game_id']).group_by(PlayGames.match_idx).all()
     gameshowtitle = ""
     idx = int(game.game_type.split("-")[1]) - 1
@@ -809,7 +812,7 @@ def game():
         
         ]
     
-    return render_template("game.html", tabName = "game",tabmenu = tabmenu)
+    return render_template("game.html", tabName = "game",tabmenu = tabmenu, game_id=game_id)
 
 @app.route("/game_import",methods=['POST'])
 @login_required
@@ -902,7 +905,7 @@ def test():
 
 @app.route('/date')
 def date():
-    return render_template("date.html")
+    return render_template("date.html",game_id = session["game_id"])
 
 @app.route('/api/save_times',methods=['POST'])
 def save_date_time():
@@ -986,10 +989,33 @@ def change_username():
             return jsonify({"status": 'success', "msg": "用户名已存在"}), 400
         
         current_user.username = new_username
-        print(new_username)
         db.session.commit()
+        
+        all_games = Games.query.all()
+        for game in all_games:
+            try:
+                signup_data = json.loads(game.signup_data)
+            except Exception:
+                continue
+            
+            changed = False
+            for member in signup_data:
+                if isinstance(member, str): continue
+                if member["id"] == current_user.id:
+                    member["username"] = current_user.username
+                    changed = True
+                    break
+                
+            if changed:
+                try: 
+                    game.signup_data = json.dumps(signup_data)
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        
         return jsonify({'status': 'success'}), 200
     except Exception as e:
+        db.session.rollback()
         return jsonify({"status": 'error', "msg": str(e)}), 400
 
 @app.route('/api/change_password', methods=['POST'])
@@ -1006,20 +1032,20 @@ def change_password():
         # 验证当前密码是否正确
         if not bcrypt.check_password_hash(current_user.password, current_password):
             print("当前密码不正确")
-            return jsonify({"success": False, "message": "当前密码不正确"}), 401
+            return jsonify({"status": "error", "msg": "当前密码不正确"}), 401
         
         # 更新密码（伪代码）
         current_user.password = bcrypt.generate_password_hash(new_password)
         db.session.commit()
         
-        return jsonify({"success": True, "message": "密码修改成功"})
+        return jsonify({"status": "success", "msg": "密码修改成功"})
         
     except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
+        return jsonify({"status": "error", "msg": str(e)}), 500
 
-@app.route('/api/upload_avatar', methods=['POST'])
+@app.route('/api/change_avatar', methods=['POST'])
 @login_required
-def upload_avatar():
+def change_avatar():
     if 'avatar' not in request.files:
         return jsonify({'error': '未选择文件'}), 400
     
@@ -1030,6 +1056,28 @@ def upload_avatar():
     
     current_user.avatar = filename
     db.session.commit()
+    
+    all_games = Games.query.all()
+    for game in all_games:
+        try:
+            signup_data = json.loads(game.signup_data)
+        except Exception:
+            continue
+        
+        changed = False
+        for member in signup_data:
+            if isinstance(member, str): continue
+            if member["id"] == current_user.id:
+                member["avatar"] = current_user.avatar
+                changed = True
+                break
+            
+        if changed:
+            try: 
+                game.signup_data = json.dumps(signup_data)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
     
     return jsonify({
         'status': 'success',

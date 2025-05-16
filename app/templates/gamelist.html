@@ -167,7 +167,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!gameCard) return;
             
                 const gameId = gameCard.dataset.gameId;
-                console.log(gameId);
                 handleGameSelection(gameId);
         })
     })
@@ -175,6 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 统一处理函数
 async function handleGameSelection(gameId) {
+  console.log("handleGameSelection: ",gameId);
     try {            
         // 显示等待模态框
         const response = await fetch('/api/choose_game', {
@@ -189,7 +189,8 @@ async function handleGameSelection(gameId) {
         
         const data = await response.json();
         console.log("操作成功:", data);
-        window.location.href = `/game`;
+        console.log("跳转到游戏:", gameId);
+        window.location.href = `/game/${gameId}`;
     } catch (error) {
         console.error('Error:', error);
     }

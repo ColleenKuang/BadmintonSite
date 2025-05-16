@@ -68,7 +68,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const top10Matches = {{ Top10Matches | tojson | safe }};
-    console.log(top10Matches); 
     const winpct_ctx = document.getElementById('WinPCTChart').getContext('2d');
     const win_cnt = top10Matches.filter(x => x === 1).length;
     const loss_cnt = 10 - win_cnt;
@@ -83,11 +82,11 @@
             }]
         },
         options: {
-            cutout: '50%', // ✔️ 必须设置中心孔洞
+            cutout: '50%', // 必须设置中心孔洞
             plugins: {
             legend: { display: false }, // 可选隐藏图例
             },
-            // ✔️ 关键：添加动画回调
+            // 添加动画回调
             animation: {
             onComplete: function() {
                 const { ctx, chartArea } = this;

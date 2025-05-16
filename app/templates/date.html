@@ -217,7 +217,14 @@
                             duration_hours: (duration / 60).toFixed(1)
                         });
                         */
-                        window.location.href = `/game`;
+                        const gameId = {{ game_id | tojson | safe }};
+                        if (gameId) {
+                            window.location.href = `/game/${gameId}`;
+                        } else {
+                            alert('Missing game ID');
+                            // 或者跳转到错误页面
+                            // window.location.href = '/error?message=missing_game_id';
+                        }
                     }
                     
                 } catch (error) {

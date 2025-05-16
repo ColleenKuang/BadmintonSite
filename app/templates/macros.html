@@ -915,6 +915,7 @@ document.getElementById('removeGame').addEventListener('click', async (e) => {
   {{render_score_card(loop.index,game)}}
 </div>
 {% endfor %}
+<!-- TODO addCustomMatch function -->
 <div id="addCustomMatch" class="card score-card shadow-sm mt-3">
   <div class="card-body p-2">
     <div class="d-flex justify-content-center align-items-center" style="height: 40px;">
@@ -1020,7 +1021,8 @@ document.addEventListener('DOMContentLoaded',function(){
         }else{
           //window.location.href = `/game`;
           const targetIdx = parseInt(formData.match_idx) + 1;
-          window.location.href = `/game#score-card-${targetIdx}`;
+          const gameId = {{ game_config.game_id | tojson | safe }};
+          window.location.href = `/game/${gameId}#score-card-${targetIdx}`;
           window.location.reload(true);
         }
       }
@@ -1171,7 +1173,8 @@ document.getElementById('rerankBtn').addEventListener('click', async function re
         if(data.msg){
           showMsgModal(data.msg);
         }else{
-          window.location.href = `/game`;
+          const gameId = {{ game_config.game_id | tojson | safe }};
+          window.location.href = `/game/${gameId}`;
         }
     }
   })
@@ -1188,11 +1191,9 @@ document.getElementById('saveGameResult').addEventListener('click', async functi
     .then(data => {
     console.log(data);
     if(data) {
-        if(data.msg){
-          showMsgModal(data.msg);
-        }else{
-          //window.location.href = `/game`;
-        }
+      if(data.msg){
+        showMsgModal(data.msg);
+      }
     }
   })
 })
