@@ -882,10 +882,6 @@ document.getElementById('game_date').addEventListener('click', async (e) => {
     }
 } catch (error) {
     await showMsgModal(error.message);
-} finally {
-    // 恢复原始状态
-    this.innerHTML = originalHTML;
-    this.style.pointerEvents = '';
 }
 });
 
