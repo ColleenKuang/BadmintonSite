@@ -344,16 +344,15 @@
         </div>
         <!-- game date&time -->
         {% if game_config.gametime %}
-            <div class="d-flex align-items-center gap-2 mt-2">
+            <div id="game_date" class="d-flex align-items-center gap-2 mt-2" style="cursor: pointer;">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
                 <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
                 <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
               </svg>
-            
               <p class="mb-0 small text-muted">{{game_config.gametime.strftime("%Y-%m-%d %H:%M")}}</p>
             </div>
         {% else%}
-          <a href="{{url_for('date')}}" class="text-decoration-none text-muted">
+          <a href="{{ url_for('date', game_id=session['game_id']) }}" class="text-decoration-none text-muted">
             <div class="d-flex justify-content-between mt-2">
               <div class="d-flex gap-2 align-items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
@@ -860,6 +859,34 @@ document.getElementById('removeGame').addEventListener('click', async (e) => {
     console.error('删除游戏失败:', error);
     await showMsgModal('删除游戏时出错，请重试');
   }
+});
+
+document.getElementById('game_date').addEventListener('click', async (e) => {
+  const gameId = window.location.pathname.split('/')[2]; // 从URL提取
+  try {
+    const response = await fetch(`/game/${gameId}/date`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken() // 需要实现此函数
+        }
+    });
+    
+    const data = await response.json();
+
+    // 处理不同类型的响应
+    if (data.status === 'redirect') {
+        window.location.href = data.url;
+    } else {
+        await showMsgModal(data.msg);
+    }
+} catch (error) {
+    await showMsgModal(error.message);
+} finally {
+    // 恢复原始状态
+    this.innerHTML = originalHTML;
+    this.style.pointerEvents = '';
+}
 });
 
 </script>

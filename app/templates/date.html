@@ -190,7 +190,7 @@
                     const duration = Math.round((endDt - startDt) / 60000);
                     
                     // 发送到后端
-                    const response = await fetch('/api/save_times', {
+                    const response = await fetch('/api/save_date_time', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

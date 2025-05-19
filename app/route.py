@@ -904,13 +904,53 @@ def history():
 def test():
     return render_template("test.html")
 
-@app.route('/date')
-def date():
-    return render_template("date.html",game_id = session["game_id"])
-
-@app.route('/api/save_times',methods=['POST'])
+@app.route('/game/<int:game_id>/date', methods=['GET', 'POST'])
+def date(game_id):
+    # 验证会话和权限
+    if 'game_id' not in session or session['game_id'] != game_id:
+        return jsonify({
+            "status": "error",
+            "msg": "无权访问此比赛",
+            "code": "UNAUTHORIZED"
+        }), 403
+    
+    # GET请求处理
+    if request.method == 'GET':
+        return render_template("date.html", game_id=game_id)
+    
+    # POST请求处理
+    try:
+        gamestatus = session["game_config"]["gamestatus"]
+        
+        if gamestatus == GameStatus.DONE.value:
+            return jsonify({
+                "status": "success",
+                "msg": "比赛已结束不可修改",
+                "code": "GAME_ENDED"
+            }), 200
+            
+        if gamestatus == GameStatus.ING.value:
+            return jsonify({
+                "status": "success",
+                "msg": "比赛进行中不可修改",
+                "code": "GAME_IN_PROGRESS"
+            }), 200
+            
+        # 正常情况返回重定向
+        return jsonify({
+            "status": "redirect",
+            "url": url_for('date', game_id=game_id, _external=True)
+        })
+        
+    except KeyError as e:
+        return jsonify({
+            "status": "error",
+            "msg": "会话数据不完整",
+            "code": "MISSING_DATA"
+        }), 400
+    
+@app.route('/api/save_date_time',methods=['POST'])
 def save_date_time():
-    print("save date")
     data = request.get_json()
     try:
         # 方法1：直接拼接本地时间（推荐）
