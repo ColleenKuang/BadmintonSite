@@ -1082,7 +1082,6 @@ def change_avatar():
                 except Exception as e:
                     print(str(e))
                     db.session.rollback()
-                    return jsonify({'status': 'error', 'msg': str(e)}), 500
     except Exception as e:
         print(str(e))
         return jsonify({'status': 'error', 'msg': str(e)}), 500

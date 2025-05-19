@@ -338,7 +338,7 @@
         // 上传按钮点击事件
         uploadBtn.addEventListener('click', function() {
             if (!cropper) {
-                showAlert('请先选择图片', 'warning');
+                showMsgModal('请先选择图片');
                 return;
             }
             
@@ -356,7 +356,7 @@
             });
             
             if (!canvas) {
-                showAlert('裁剪失败，请重试', 'danger');
+                showMsgModal('裁剪失败，请重试');
                 return;
             }
             
@@ -379,17 +379,17 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.status === 'success') {
+                    if (data.status == 'success') {
                         // 更新预览头像
                         avatarPreview.src = data.avatar_url;
                         modal.hide();
-                        showAlert('头像上传成功', 'success');
+                        showMsgModal('头像上传成功',"/personal_info");
                     } else {
-                        showAlert(data.error || '上传失败', 'danger');
+                        showMsgModal(data.msg || '上传失败');
                     }
                 })
                 .catch(error => {
-                    showAlert('网络错误，请重试', 'danger');
+                    showMsgModal('网络错误，请重试');
                 })
                 .finally(() => {
                     uploadBtn.disabled = false;
@@ -397,11 +397,6 @@
                 });
             }, 'image/png', 0.9); // 90%质量
         });
-        
-        // 辅助函数
-        function showAlert(message, type) {
-            // 同之前的实现
-        }
         
         function getCSRFToken() {
             return document.querySelector('meta[name="csrf-token"]')?.content || '';
