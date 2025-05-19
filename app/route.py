@@ -1053,7 +1053,7 @@ def change_avatar():
     try:
         file = request.files['avatar']
         # 文件验证和保存逻辑...
-        filename = secure_filename(f"user_{current_user.id}.{file.filename.split('.')[-1]}")
+        filename = secure_filename(f"user_{current_user.id}.png")
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], 'avatars', filename))
         
         current_user.avatar = filename
