@@ -21,6 +21,7 @@ import pytz
 @app.route("/index")
 @login_required
 def hello_world():
+    # TODO tell fortune
     gps = find_good_partner(current_user.id)
     print(gps)
     bos = find_best_opponent(current_user.id)
@@ -1049,35 +1050,43 @@ def change_avatar():
     if 'avatar' not in request.files:
         return jsonify({'error': '未选择文件'}), 400
     
-    file = request.files['avatar']
-    # 文件验证和保存逻辑...
-    filename = secure_filename(f"user_{current_user.id}.{file.filename.split('.')[-1]}")
-    file.save(os.path.join(app.config['UPLOAD_FOLDER'], 'avatars', filename))
-    
-    current_user.avatar = filename
-    db.session.commit()
-    
-    all_games = Games.query.all()
-    for game in all_games:
-        try:
-            signup_data = json.loads(game.signup_data)
-        except Exception:
-            continue
+    try:
+        file = request.files['avatar']
+        # 文件验证和保存逻辑...
+        filename = secure_filename(f"user_{current_user.id}.{file.filename.split('.')[-1]}")
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], 'avatars', filename))
         
-        changed = False
-        for member in signup_data:
-            if isinstance(member, str): continue
-            if member["id"] == current_user.id:
-                member["avatar"] = current_user.avatar
-                changed = True
-                break
+        current_user.avatar = filename
+        db.session.commit()
+        
+        all_games = Games.query.all()
+        for game in all_games:
+            try:
+                signup_data = json.loads(game.signup_data)
+            except Exception as e:
+                print(str(e))
+                continue
             
-        if changed:
-            try: 
-                game.signup_data = json.dumps(signup_data)
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
+            changed = False
+            for member in signup_data:
+                if isinstance(member, str): continue
+                if member["id"] == current_user.id:
+                    member["avatar"] = current_user.avatar
+                    changed = True
+                    break
+                
+            if changed:
+                try: 
+                    game.signup_data = json.dumps(signup_data)
+                    db.session.commit()
+                except Exception as e:
+                    print(str(e))
+                    db.session.rollback()
+                    return jsonify({'status': 'error', 'msg': str(e)}), 500
+    except Exception as e:
+        print(str(e))
+        return jsonify({'status': 'error', 'msg': str(e)}), 500
+    
     
     return jsonify({
         'status': 'success',
