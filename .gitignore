@@ -1,3 +1,8 @@
 app.db
+
+# Python cache files
 __pycache__/
 *.pyc
+
+# Also cache in subdirectories (optional but更保险)
+**/__pycache__/
