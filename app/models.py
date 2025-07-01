@@ -6,6 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError,IntegrityError
 import pandas as pd
 import csv
 from datetime import datetime, timezone
+import json
 class Gender(Enum):
     MALE = "male"
     FEMALE = "female"
@@ -239,7 +240,7 @@ def create_game_with_csv(
             reader = list(csv.DictReader(f))  # 转换为列表
             total_rows = len(reader)
             play_games_to_add = []
-            
+            member_list = []
             for row_num in range(total_rows):
                 row = reader[row_num]
                 print("row_num:{}".format(row_num),end=" ")
@@ -259,7 +260,8 @@ def create_game_with_csv(
                     else:
                         teammate_row = reader[row_num + 1]
                     teammate_id = int(teammate_row['player_id'])
-                    my_gender = Users.query.filter(Users.id == int(row['player_id'])).first().gender
+                    me = Users.query.filter(Users.id == int(row['player_id'])).first()
+                    my_gender = me.gender
                     teammate_gender = Users.query.filter(Users.id == int(teammate_id)).first().gender
                     mt = MatchType.MIX_DOUBLE if my_gender != teammate_gender else MatchType.MEN_DOUBLE if my_gender==Gender.MALE else MatchType.WOMEN_DOUBLE
                     result = MatchResultType.WIN
@@ -285,7 +287,14 @@ def create_game_with_csv(
                         result=result,
                         net_score=net_score
                     )
-                    print(play_game)
+                    # print(play_game)
+                    if int(row['player_id']) not in [m["id"] for m in member_list]:
+                        member_list.append({
+                            "id": int(row['player_id']), 
+                            "username": me.username, 
+                            "avatar": me.avatar, 
+                            "gender": 1 if my_gender==Gender.MALE else 0
+                        })
                     play_games_to_add.append(play_game)
                     
                 except KeyError as e:
@@ -299,6 +308,7 @@ def create_game_with_csv(
 
             # 批量插入
             db.session.bulk_save_objects(play_games_to_add)
+            new_game.signup_data = json.dumps(member_list)
             db.session.commit()
             print(f"""
                 导入成功！

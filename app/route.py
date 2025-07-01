@@ -6,7 +6,7 @@ from app.models import Gender, TeamType, MatchResultType, GameStatus, MatchType
 from app.models import get_player_stats, get_game_scores, create_game_with_csv, find_good_partner, find_best_opponent
 from flask_login import login_user, login_required, current_user, logout_user
 from werkzeug.utils import secure_filename
-import os,json
+import os, json
 from app.games import double_mode_1, double_mode_2, double_mode_3
 from sqlalchemy.exc import SQLAlchemyError,IntegrityError
 from sqlalchemy import and_, desc
@@ -889,15 +889,16 @@ def personal_info():
 # TODO history func
 def history():
     latest_results = (
-    db.session.query(PlayGames.result)
+    db.session.query(PlayGames.result, PlayGames.net_score)
         .filter(PlayGames.player_id == current_user.id)
-        .order_by(PlayGames.match_idx.desc())
+        .filter(PlayGames.result != None)
+        .order_by(PlayGames.game_id.desc(), PlayGames.match_idx.desc())
         .limit(10)
         .all()
     )
-
+    print(latest_results)
     # 提取结果为列表
-    Top10Matches = [1 if r.result.value == "win" else 0 for r in latest_results]
+    Top10Matches = [(1,r.net_score) if r.result.value == "win" else (0,r.net_score) for r in latest_results]
     return render_template("history.html", Top10Matches=Top10Matches)
 
 @app.route('/test')
