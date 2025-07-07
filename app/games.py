@@ -12,7 +12,7 @@ def double_mode_1(member_list, matches_per_player, max_consecutive_games=2, min_
     """
     # 1. 数据准备
     active_players = [i for i, m in enumerate(member_list) if m != ""]
-    total_players = (len(member_list))
+    total_players = (len(active_players))
     
     if total_players < 4:
         return "有效成员不足4人"
@@ -31,7 +31,12 @@ def double_mode_1(member_list, matches_per_player, max_consecutive_games=2, min_
     }
 
     # 2. 优先队列（按参与次数少的优先）
-    player_queue = deque(sorted(active_players, key=lambda x: player_stats[x]['games_played']))
+    # 先打乱 active_players 列表
+    shuffled_players = active_players.copy()
+    random.shuffle(shuffled_players)
+
+    # 再按参与次数排序（初始都为0，这步等价于随机顺序）
+    player_queue = deque(sorted(shuffled_players, key=lambda x: player_stats[x]['games_played']))
 
     # 3. 生成对战表
     for _ in range(total_rounds):
@@ -91,7 +96,8 @@ def smart_pairing(players, player_stats):
     possible_teams = list(combinations(players, 2))
     best_score = float('inf')
     best_pair = None
-    
+    print("player_stats:")
+    print(player_stats)
     # 评估所有可能的对战组合
     for i in range(len(possible_teams)):
         for j in range(i+1, len(possible_teams)):
@@ -104,8 +110,8 @@ def smart_pairing(players, player_stats):
                 
             # 计算配对得分（越低越好）
             score = (
-                player_stats[team1[0]]['teammates'][team1[1]] +
-                player_stats[team2[0]]['teammates'][team2[1]] +
+                player_stats[team1[0]]['teammates'][team1[1]]* 3 +
+                player_stats[team2[0]]['teammates'][team2[1]]* 3 +
                 sum(player_stats[p]['opponents'][op] for p in team1 for op in team2)
             )
             

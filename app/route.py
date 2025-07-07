@@ -23,9 +23,9 @@ import pytz
 def hello_world():
     # TODO tell fortune
     gps = find_good_partner(current_user.id)
-    print(gps)
+    # print(gps)
     bos = find_best_opponent(current_user.id)
-    print(bos)
+    # print(bos)
     return render_template('index.html',gps=list(gps),bos=list(bos))
 
 @app.route('/register', methods=['GET','POST'])
@@ -350,9 +350,9 @@ def choose_game():
 # TODO modify PlayGame records into one
 def record_double_schedule(schedule):
     games = []
-    print("record")
+    # print("record")
     for idx, g in enumerate(schedule):
-        print(g)
+        # print(g)
         t00 = session["game_config"]["member_list"][g[0][0]]
         t01 = session["game_config"]["member_list"][g[0][1]]
         t10 = session["game_config"]["member_list"][g[1][0]]
@@ -398,7 +398,7 @@ def record_double_schedule(schedule):
                 updated_at=current_time
             )
         ]
-        print(records_to_add)
+        # print(records_to_add)
         db.session.bulk_save_objects(records_to_add)
         db.session.commit()
         games.append({
@@ -451,7 +451,7 @@ def generate_matches():
             re = double_mode_2(session['game_config']["member_list"], matches_per_player=matchesPerPlayer)
         if session["game_config"]["gametype"] == "double-3":
             re = double_mode_3(session['game_config']["member_list"], matches_per_player=matchesPerPlayer)
-        print("schedule:",re)
+        # print("schedule:",re)
         if isinstance(re,str):
             return jsonify({"status": "success","msg":re}), 200
         
