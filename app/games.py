@@ -260,17 +260,26 @@ def double_mode_3(member_list, matches_per_player, max_consecutive_games=2, min_
     active_players = [i for i, m in enumerate(member_list) if m != ""]
     total_players = len(active_players)
     
-    # if total_players % 2 != 0:
-    #     return "成员数量必须是偶数"
+    if total_players % 2 != 0:
+        return "成员数量必须是偶数"
     
     # 2. 分组
     group_a = [active_players[i] for i in range(0, len(active_players), 2)]
     group_b = [active_players[i] for i in range(1, len(active_players), 2)]
-    
+    print("group a: ", group_a)
     # 3. 初始化
     total_rounds = (total_players * matches_per_player) // 4
     schedule = []
-    player_stats = {p: {'games': 0, 'consecutive': 0, 'rest': 0} for p in active_players}
+    player_stats = {
+        p: {
+            'games': 0,
+            'consecutive': 0,
+            'rest': 0,
+            'teammates': defaultdict(int),
+            'opponents': defaultdict(int)
+        } 
+        for p in active_players
+    }
     pairings_count = defaultdict(int)
     
     # 4. 配对优化策略
@@ -292,7 +301,7 @@ def double_mode_3(member_list, matches_per_player, max_consecutive_games=2, min_
             
         # 4.3 智能配对（最少使用组合优先）
         def get_pair_score(a, b):
-            score = pairings_count.get((a, b), 0) +  player_stats[a]['games'] + player_stats[b]['games'] - player_stats[a]['rest']*2 - player_stats[b]['rest']*2
+            score = pairings_count.get((a, b), 0) +  player_stats[a]['games'] + player_stats[b]['games'] + player_stats[a]['consecutive'] + player_stats[b]['consecutive'] - player_stats[a]['rest']*2 - player_stats[b]['rest']*2
             return score
         
         # 生成所有可能的配对组合
@@ -343,6 +352,7 @@ def double_mode_3(member_list, matches_per_player, max_consecutive_games=2, min_
                 player_stats[player]['consecutive'] = 0
                 player_stats[player]['rest'] += 1
     
+        print(pairings_count)
     return schedule
 
 def double_mode_8():
