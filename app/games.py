@@ -301,7 +301,7 @@ def double_mode_3(member_list, matches_per_player, max_consecutive_games=2, min_
             
         # 4.3 智能配对（最少使用组合优先）
         def get_pair_score(a, b):
-            score = pairings_count.get((a, b), 0)*2 +  player_stats[a]['games'] + player_stats[b]['games'] + player_stats[a]['consecutive'] + player_stats[b]['consecutive'] - player_stats[a]['rest']*2 - player_stats[b]['rest']*2
+            score = pairings_count.get((a, b), 0)*3 +  player_stats[a]['games'] + player_stats[b]['games'] + player_stats[a]['consecutive'] + player_stats[b]['consecutive'] - player_stats[a]['rest']*2 - player_stats[b]['rest']*2
             return score
         
         # 生成所有可能的配对组合
